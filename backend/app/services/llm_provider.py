@@ -1,56 +1,114 @@
-import os
+﻿import os
+import logging
 from typing import Optional, List
-import urllib.request
-import json
+from pathlib import Path
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+logger = logging.getLogger("swasthya_llm")
+
+def get_gemini_api_key() -> Optional[str]:
+    key = os.environ.get("GEMINI_API_KEY")
+    if key and key.strip():
+        return key.strip()
+
+    env_file = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+    if env_file.exists():
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("GEMINI_API_KEY="):
+                        k = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if k:
+                            os.environ["GEMINI_API_KEY"] = k
+                            return k
+        except Exception as e:
+            logger.error(f"Error reading .env: {e}")
+    return None
+
+CANDIDATE_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash"
+]
+
+def test_gemini_connection(api_key: str) -> bool:
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=api_key)
+        for model in CANDIDATE_MODELS:
+            try:
+                resp = client.models.generate_content(
+                    model=model,
+                    contents="Say OK",
+                    config=types.GenerateContentConfig(
+                        thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    )
+                )
+                if resp and resp.text:
+                    return True
+            except Exception:
+                try:
+                    resp = client.models.generate_content(
+                        model=model,
+                        contents="Say OK"
+                    )
+                    if resp and resp.text:
+                        return True
+                except Exception:
+                    continue
+        return False
+    except Exception:
+        return False
 
 def generate_plain_language_summary(facts: List[str], condition_name: str) -> Optional[str]:
-    """
-    Attempts to use Gemini REST API if GEMINI_API_KEY is present in environment.
-    Strictly constrained: rewrites only provided structured facts.
-    Returns None if key is missing, network error, or safety violation.
-    """
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = get_gemini_api_key()
     if not api_key:
         return None
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-    
     prompt = (
-        "You are SwasthyaLoop's plain-language health summary assistant.\n"
-        "Summarize ONLY these structured follow-up facts in a reassuring, clear paragraph for the patient:\n"
+        "You are SwasthyaLoop's compassionate plain-language health summary assistant.\n"
+        f"The patient is managing: {condition_name}.\n"
+        "Summarize ONLY these structured clinical follow-up facts in an encouraging, clear paragraph for the patient:\n"
         + "\n".join(f"- {f}" for f in facts) +
-        "\n\nSTRICT SAFETY CONSTRAINTS:\n"
-        "- Do NOT diagnose or interpret medical severity.\n"
-        "- Do NOT recommend medications, dosage changes, or treatments.\n"
-        "- Keep response under 100 words.\n"
+        "\n\nSTRICT CLINICAL SAFETY RULES:\n"
+        "- Do NOT provide medical diagnoses or interpret clinical severity.\n"
+        "- Do NOT prescribe, recommend, or modify any medications or dosages.\n"
+        "- Only speak to the facts listed above.\n"
+        "- Keep the response under 100 words in friendly, empathetic language.\n"
     )
 
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 200
-        }
-    }
-
     try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=5) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            candidate = result["candidates"][0]["content"]["parts"][0]["text"].strip()
-            
-            # Safety suppression check
-            forbidden_tokens = ["prescribe", "diagnosis", "dosage", "mg of", "take more", "cure"]
-            if any(token in candidate.lower() for token in forbidden_tokens):
-                return None
-            return candidate
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=api_key)
+        for model in CANDIDATE_MODELS:
+            response = None
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    )
+                )
+            except Exception:
+                try:
+                    response = client.models.generate_content(
+                        model=model,
+                        contents=prompt
+                    )
+                except Exception:
+                    continue
+
+            if response and response.text:
+                candidate = response.text.strip()
+                forbidden_tokens = ["prescribe", "diagnosis", "dosage", "mg of", "take more", "cure"]
+                violating = [token for token in forbidden_tokens if token in candidate.lower()]
+                if violating:
+                    return None
+                return candidate
+        return None
     except Exception:
         return None

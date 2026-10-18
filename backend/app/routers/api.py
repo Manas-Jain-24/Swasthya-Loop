@@ -1,3 +1,4 @@
+﻿from pydantic import BaseModel
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -185,3 +186,44 @@ def get_coordinator_overview(db: Session = Depends(get_db)):
 def get_patient_summary_endpoint(req: SummaryRequest, db: Session = Depends(get_db)):
     summary_data = generate_patient_summary(db, req.patient_id)
     return SummaryResponse(**summary_data)
+
+class GeminiKeyRequest(BaseModel):
+    api_key: str
+
+@router.get("/settings/status")
+def get_settings_status():
+    from ..services.llm_provider import get_gemini_api_key
+    key = get_gemini_api_key()
+    return {
+        "gemini_active": bool(key),
+        "model": "gemini-3.8-flash" if key else "offline_deterministic_fallback"
+    }
+
+@router.post("/settings/gemini-key")
+def set_gemini_key(req: GeminiKeyRequest):
+    key = req.api_key.strip()
+    if not key:
+        raise HTTPException(status_code=400, detail="API key cannot be empty.")
+    
+    from ..services.llm_provider import test_gemini_connection
+    is_valid = test_gemini_connection(key)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Failed to authenticate with Gemini API. Please check your key.")
+    
+    import os
+    from pathlib import Path
+    os.environ["GEMINI_API_KEY"] = key
+    
+    env_file = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+    try:
+        with open(env_file, "w", encoding="utf-8") as f:
+            f.write(f"GEMINI_API_KEY={key}\n")
+    except Exception:
+        pass
+        
+    return {
+        "status": "success",
+        "message": "Gemini API key successfully validated and activated!",
+        "model": "gemini-3.8-flash"
+    }
+

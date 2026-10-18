@@ -22,3 +22,7 @@ dist/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Environment secrets
+.env
+*.env
