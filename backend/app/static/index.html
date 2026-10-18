@@ -88,19 +88,25 @@
       </div>
 
       <!-- Center: Role / Patient Switcher -->
-      <div class="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shadow-inner">
-        <button id="btn-patient-a" onclick="switchView('patient-001')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm">
+      <div class="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shadow-inner space-x-1">
+        <div class="relative flex items-center">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none"></i>
+          <select id="patient-select-dropdown" onchange="switchView(this.value)" class="bg-slate-900 text-white text-xs rounded-lg pl-8 pr-7 py-1.5 border border-slate-700/80 font-medium focus:outline-none focus:border-brand-500 cursor-pointer">
+            <option value="patient-001">Demo Patient A (Hypertension)</option>
+            <option value="patient-002">Demo Patient B (T2D)</option>
+            <option value="patient-003">Rajesh Sharma (HTN Crisis Spike)</option>
+            <option value="patient-004">Sunita Patel (T2D Well-Controlled)</option>
+            <option value="patient-005">Amitav Verma (Dual HTN + T2D)</option>
+          </select>
+        </div>
+        <button id="btn-patient-tab" onclick="switchView(document.getElementById('patient-select-dropdown').value)" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm">
           <i data-lucide="user" class="w-3.5 h-3.5"></i>
-          <span>Patient A (Hypertension)</span>
+          <span>Patient Chart</span>
         </button>
-        <button id="btn-patient-b" onclick="switchView('patient-002')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
-          <i data-lucide="user" class="w-3.5 h-3.5"></i>
-          <span>Patient B (Diabetes)</span>
-        </button>
-        <button id="btn-coordinator" onclick="switchView('coordinator')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
+        <button id="btn-coordinator" onclick="switchView('coordinator')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
           <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
           <span>Coordinator Triage</span>
-          <span id="nav-flag-count" class="ml-1 px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded-full text-[10px] font-bold">1</span>
+          <span id="nav-flag-count" class="ml-1 px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded-full text-[10px] font-bold">2</span>
         </button>
       </div>
 
@@ -368,6 +374,10 @@
           </div>
 
           <div class="flex items-center space-x-3">
+            <button onclick="exportTriageCSV()" class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5 shadow-sm transition-all">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export Triage CSV</span>
+            </button>
             <button onclick="refreshCoordinatorData()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center space-x-1.5">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
               <span>Refresh Triage Queue</span>
@@ -428,65 +438,18 @@
         </div>
       </div>
 
-      <!-- Monitored Patients Roster -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <!-- Patient A Card -->
-        <div class="glass-panel p-5 rounded-2xl">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold">PA</div>
-              <div>
-                <h4 class="text-sm font-semibold text-white">Demo Patient A</h4>
-                <p class="text-[11px] text-slate-400">Hypertension • Age 56</p>
-              </div>
-            </div>
-            <button onclick="switchView('patient-001')" class="px-3 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:text-white border border-slate-700">Open Chart</button>
-          </div>
-          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center text-[11px]">
-            <div>
-              <span class="text-slate-500 block">Latest BP</span>
-              <span class="text-white font-mono font-medium">132/82 mmHg</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block">Open Flags</span>
-              <span class="text-emerald-400 font-medium">0 Clean</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block">Next Appt</span>
-              <span class="text-slate-300 font-medium">Oct 24</span>
-            </div>
-          </div>
+      <!-- Monitored Patients Roster (Dynamic Clinic Cohort) -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-white flex items-center space-x-2">
+            <i data-lucide="users" class="w-4 h-4 text-brand-400"></i>
+            <span>Clinic Patient Cohort Status (5 Patients)</span>
+          </h3>
+          <span class="text-[11px] text-slate-400">Click any card to open individual chart</span>
         </div>
-
-        <!-- Patient B Card -->
-        <div class="glass-panel p-5 rounded-2xl">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold">PB</div>
-              <div>
-                <h4 class="text-sm font-semibold text-white">Demo Patient B</h4>
-                <p class="text-[11px] text-slate-400">Type 2 Diabetes • Age 62</p>
-              </div>
-            </div>
-            <button onclick="switchView('patient-002')" class="px-3 py-1 rounded-lg text-xs bg-brand-600 text-white shadow-sm hover:bg-brand-500">Open Chart</button>
-          </div>
-          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center text-[11px]">
-            <div>
-              <span class="text-slate-500 block">Latest Glucose</span>
-              <span class="text-white font-mono font-medium">115 mg/dL</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block">Open Flags</span>
-              <span class="text-amber-400 font-medium">1 Overdue Task</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block">Next Appt</span>
-              <span class="text-slate-300 font-medium">Oct 26</span>
-            </div>
-          </div>
+        <div id="coordinator-patient-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Dynamically populated -->
         </div>
-
       </div>
 
     </div>
@@ -607,34 +570,26 @@
     // Switch between views
     function switchView(view) {
       currentView = view;
-      const btnA = document.getElementById("btn-patient-a");
-      const btnB = document.getElementById("btn-patient-b");
-      const btnCoord = document.getElementById("btn-coordinator");
       const patientView = document.getElementById("patient-view");
       const coordView = document.getElementById("coordinator-view");
+      const btnPatientTab = document.getElementById("btn-patient-tab");
+      const btnCoord = document.getElementById("btn-coordinator");
+      const dropdown = document.getElementById("patient-select-dropdown");
 
-      // Reset button styles
-      [btnA, btnB, btnCoord].forEach(btn => {
-        btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5";
-      });
-
-      if (view === "patient-001") {
-        currentPatientId = "patient-001";
-        btnA.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm";
-        patientView.classList.remove("hidden");
-        coordView.classList.add("hidden");
-        loadPatientData("patient-001");
-      } else if (view === "patient-002") {
-        currentPatientId = "patient-002";
-        btnB.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm";
-        patientView.classList.remove("hidden");
-        coordView.classList.add("hidden");
-        loadPatientData("patient-002");
-      } else if (view === "coordinator") {
-        btnCoord.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-amber-600 text-white shadow-sm";
+      if (view === "coordinator") {
+        if (btnCoord) btnCoord.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-amber-600 text-white shadow-sm";
+        if (btnPatientTab) btnPatientTab.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5";
         patientView.classList.add("hidden");
         coordView.classList.remove("hidden");
         loadCoordinatorData();
+      } else {
+        currentPatientId = view;
+        if (dropdown) dropdown.value = view;
+        if (btnPatientTab) btnPatientTab.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm";
+        if (btnCoord) btnCoord.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5";
+        patientView.classList.remove("hidden");
+        coordView.classList.add("hidden");
+        loadPatientData(view);
       }
       lucide.createIcons();
     }
@@ -652,13 +607,20 @@
         // 1. Update Profile Header
         document.getElementById("patient-name").innerText = patientRes.display_name;
         document.getElementById("patient-age").innerText = patientRes.age;
-        document.getElementById("patient-avatar").innerText = patientId === "patient-001" ? "PA" : "PB";
+        const initials = patientRes.display_name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+        document.getElementById("patient-avatar").innerText = initials;
         
-        const isHypertension = patientRes.conditions.includes("hypertension");
-        document.getElementById("patient-condition-badge").innerText = isHypertension ? "Hypertension Care Plan" : "Type 2 Diabetes Care Plan";
-        document.getElementById("patient-plan-subtitle").innerText = isHypertension 
-          ? "Active Plan: Daily Blood Pressure & Sodium Monitoring" 
-          : "Active Plan: Fasting & Post-Meal Blood Glucose Logging";
+        const conditions = patientRes.conditions || [];
+        if (conditions.includes("hypertension") && conditions.includes("type_2_diabetes")) {
+          document.getElementById("patient-condition-badge").innerText = "Dual Care: HTN & Diabetes";
+          document.getElementById("patient-plan-subtitle").innerText = "Active Plan: Comprehensive BP & Glycemic Multi-Tracking";
+        } else if (conditions.includes("hypertension")) {
+          document.getElementById("patient-condition-badge").innerText = "Hypertension Care Plan";
+          document.getElementById("patient-plan-subtitle").innerText = "Active Plan: Daily Blood Pressure & Sodium Monitoring";
+        } else {
+          document.getElementById("patient-condition-badge").innerText = "Type 2 Diabetes Care Plan";
+          document.getElementById("patient-plan-subtitle").innerText = "Active Plan: Fasting & Post-Meal Blood Glucose Logging";
+        }
 
         document.getElementById("stat-next-appt").innerText = planRes.next_appointment 
           ? new Date(planRes.next_appointment).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -932,44 +894,127 @@
         document.getElementById("coord-stat-patients").innerText = res.total_patients;
         document.getElementById("coord-stat-flags").innerText = res.total_open_flags;
         document.getElementById("coord-stat-tasks").innerText = res.total_pending_tasks;
-        document.getElementById("nav-flag-count").innerText = res.total_open_flags;
+        const navCount = document.getElementById("nav-flag-count");
+        if (navCount) navCount.innerText = res.total_open_flags;
 
+        // 1. Triage Queue Table
         const tableBody = document.getElementById("coordinator-table-body");
         tableBody.innerHTML = "";
 
         if (followups.length === 0) {
           tableBody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">All follow-ups resolved. Triage queue is clear!</td></tr>';
-          return;
+        } else {
+          followups.forEach(flag => {
+            const pMeta = res.patients ? res.patients.find(p => p.patient_id === flag.patient_id) : null;
+            const pName = pMeta ? pMeta.patient_name : flag.patient_id;
+            const pCond = pMeta ? pMeta.conditions.join(", ").replace(/_/g, " ") : "Chronic Care";
+
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-slate-800/40 transition-colors";
+            tr.innerHTML = `
+              <td class="py-3 px-6 font-medium text-white">${pName}</td>
+              <td class="py-3 px-6 text-slate-400 capitalize">${pCond}</td>
+              <td class="py-3 px-6">
+                <span class="font-semibold text-white block">${flag.reason}</span>
+                <span class="text-[11px] text-slate-400">${flag.recommended_action}</span>
+              </td>
+              <td class="py-3 px-6">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                  flag.priority === 'urgent' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                }">${flag.priority}</span>
+              </td>
+              <td class="py-3 px-6 font-mono text-[11px] text-brand-400">${flag.source_rule_id}</td>
+              <td class="py-3 px-6 text-right">
+                <button onclick="resolveFlag('${flag.id}')" class="px-3 py-1 rounded-lg text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all">
+                  Mark Resolved
+                </button>
+              </td>
+            `;
+            tableBody.appendChild(tr);
+          });
         }
 
-        followups.forEach(flag => {
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-slate-800/40 transition-colors";
-          tr.innerHTML = `
-            <td class="py-3 px-6 font-medium text-white">${flag.patient_id === 'patient-001' ? 'Demo Patient A' : 'Demo Patient B'}</td>
-            <td class="py-3 px-6 text-slate-400">${flag.patient_id === 'patient-001' ? 'Hypertension' : 'Type 2 Diabetes'}</td>
-            <td class="py-3 px-6">
-              <span class="font-semibold text-white block">${flag.reason}</span>
-              <span class="text-[11px] text-slate-400">${flag.recommended_action}</span>
-            </td>
-            <td class="py-3 px-6">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                flag.priority === 'urgent' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }">${flag.priority}</span>
-            </td>
-            <td class="py-3 px-6 font-mono text-[11px] text-brand-400">${flag.source_rule_id}</td>
-            <td class="py-3 px-6 text-right">
-              <button onclick="resolveFlag('${flag.id}')" class="px-3 py-1 rounded-lg text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all">
-                Mark Resolved
-              </button>
-            </td>
-          `;
-          tableBody.appendChild(tr);
-        });
+        // 2. Dynamic Clinic Cohort Cards
+        const cardsContainer = document.getElementById("coordinator-patient-cards");
+        if (cardsContainer && res.patients) {
+          cardsContainer.innerHTML = "";
+          res.patients.forEach(p => {
+            const initials = p.patient_name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+            let readingDisplay = "No readings";
+            if (p.latest_reading) {
+              if (p.latest_reading.type === "blood_pressure") {
+                readingDisplay = `${p.latest_reading.systolic_mmhg}/${p.latest_reading.diastolic_mmhg} mmHg`;
+              } else {
+                readingDisplay = `${p.latest_reading.value} mg/dL`;
+              }
+            }
+            const apptDisplay = p.next_appointment ? new Date(p.next_appointment).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "N/A";
+            const flagBadge = p.open_flags_count > 0 
+              ? `<span class="text-amber-400 font-medium">${p.open_flags_count} Action Item(s)</span>`
+              : `<span class="text-emerald-400 font-medium">0 Clean</span>`;
+
+            const card = document.createElement("div");
+            card.className = "glass-panel p-5 rounded-2xl flex flex-col justify-between";
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold">${initials}</div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-white">${p.patient_name}</h4>
+                    <p class="text-[11px] text-slate-400 capitalize">${p.conditions.join(', ').replace(/_/g, ' ')}</p>
+                  </div>
+                </div>
+                <button onclick="switchView('${p.patient_id}')" class="px-3 py-1 rounded-lg text-xs bg-brand-600 text-white shadow-sm hover:bg-brand-500 font-medium transition-all">Open Chart</button>
+              </div>
+              <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center text-[11px]">
+                <div>
+                  <span class="text-slate-500 block">Latest Reading</span>
+                  <span class="text-white font-mono font-medium">${readingDisplay}</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block">Triage Status</span>
+                  ${flagBadge}
+                </div>
+                <div>
+                  <span class="text-slate-500 block">Next Appt</span>
+                  <span class="text-slate-300 font-medium">${apptDisplay}</span>
+                </div>
+              </div>
+            `;
+            cardsContainer.appendChild(card);
+          });
+        }
+        lucide.createIcons();
 
       } catch (err) {
         console.error("Error loading coordinator data:", err);
       }
+    }
+
+    // Export Triage CSV Function
+    function exportTriageCSV() {
+      fetch(`${API_BASE}/coordinator/overview`)
+        .then(r => r.json())
+        .then(res => {
+          fetch(`${API_BASE}/followups`)
+            .then(r => r.json())
+            .then(flags => {
+              let csv = "Patient ID,Patient Name,Conditions,Priority,Reason,Action,Source Rule,Created At\n";
+              flags.forEach(f => {
+                const p = res.patients ? res.patients.find(pt => pt.patient_id === f.patient_id) : null;
+                const name = p ? `\"${p.patient_name}\"` : f.patient_id;
+                const conds = p ? `\"${p.conditions.join('; ')}\"` : "";
+                csv += `\"${f.patient_id}\",${name},${conds},\"${f.priority}\",\"${f.reason.replace(/"/g, '""')}\",\"${f.recommended_action.replace(/"/g, '""')}\",\"${f.source_rule_id}\",\"${f.created_at}\"\n`;
+              });
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `swasthya_triage_report_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            });
+        });
     }
 
     async function resolveFlag(flagId) {
@@ -989,10 +1034,12 @@
     function openReadingModal() {
       document.getElementById("reading-modal").classList.remove("hidden");
       document.getElementById("modal-error").classList.add("hidden");
-      document.getElementById("modal-patient-label").innerText = `Logging for ${currentPatientId === 'patient-001' ? 'Demo Patient A (Hypertension)' : 'Demo Patient B (Diabetes)'}`;
+      const pName = document.getElementById("patient-name") ? document.getElementById("patient-name").innerText : currentPatientId;
+      document.getElementById("modal-patient-label").innerText = `Logging for ${pName}`;
       
       // Select appropriate tab for current patient
-      selectReadingType(currentPatientId === 'patient-001' ? 'blood_pressure' : 'blood_glucose');
+      const isBP = ["patient-001", "patient-003"].includes(currentPatientId);
+      selectReadingType(isBP ? 'blood_pressure' : 'blood_glucose');
     }
 
     function closeReadingModal() {
