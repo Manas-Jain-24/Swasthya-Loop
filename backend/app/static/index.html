@@ -824,10 +824,11 @@
 
     async function refreshData() {
       try {
+        const timestamp = Date.now();
         const [overviewRes, patientsRes, followupsRes] = await Promise.all([
-          fetch(`${API_BASE}/coordinator/overview`).then(r => r.json()),
-          fetch(`${API_BASE}/patients`).then(r => r.json()),
-          fetch(`${API_BASE}/followups`).then(r => r.json())
+          fetch(`${API_BASE}/coordinator/overview?_t=${timestamp}`, { cache: "no-store" }).then(r => r.json()),
+          fetch(`${API_BASE}/patients?_t=${timestamp}`, { cache: "no-store" }).then(r => r.json()),
+          fetch(`${API_BASE}/followups?_t=${timestamp}`, { cache: "no-store" }).then(r => r.json())
         ]);
 
         clinicOverview = overviewRes;
@@ -1458,40 +1459,48 @@
       const noteInput = document.getElementById("resolve-note-input");
       const note = noteInput ? noteInput.value.trim() : "";
       
+      // 1. Immediately close the modal and clear input
+      closeResolveModal();
+      if (noteInput) noteInput.value = "";
+
+      // 2. Instant Optimistic Removal: remove flag and decrement badge
+      if (clinicFlags) {
+        clinicFlags = clinicFlags.filter(f => f.id !== flagId);
+      }
+      if (clinicOverview && clinicOverview.total_open_flags > 0) {
+        clinicOverview.total_open_flags--;
+      }
+
+      // 3. Immediately re-render queue and tables so the item vanishes in 0ms!
+      updateHeaderStats();
+      renderOverview();
+      renderTriageTable();
+      showToast("Triage flag resolved & clinical audit logged", "success");
+
+      // 4. Send PATCH to backend with cache: 'no-store'
       try {
         const res = await fetch(`${API_BASE}/followups/${flagId}/resolve`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ note: note })
+          body: JSON.stringify({ note: note }),
+          cache: "no-store"
         });
         
         if (!res.ok) {
-          showToast("Failed to resolve flag. Please try again.", "error");
+          showToast("Failed to resolve on server. Syncing data...", "error");
+          await refreshData();
           return;
         }
 
-        // Optimistically remove from clinicFlags immediately
-        if (clinicFlags) {
-          clinicFlags = clinicFlags.filter(f => f.id !== flagId);
-        }
-
-        closeResolveModal();
-        if (noteInput) noteInput.value = "";
-        showToast("Triage flag resolved & clinical audit logged", "success");
-        
-        // Refresh UI components immediately
-        updateHeaderStats();
-        renderOverview();
-        renderTriageTable();
-        
-        // Full backend sync
+        // 5. Clean fresh backend sync without cache
         await refreshData();
-        if (currentPatientId) {
+        if (currentNav === "chart" && currentPatientId) {
           loadPatientChart(currentPatientId);
         }
       } catch (err) {
         console.error("Error resolving flag:", err);
-        showToast("Error connecting to server.", "error");
+        showToast("Network error. Syncing data...", "error");
+        await refreshData();
       }
     }
 
