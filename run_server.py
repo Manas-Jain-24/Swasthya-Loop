@@ -15,13 +15,13 @@ def main():
     
     python_exec = VENV_PYTHON if os.path.exists(VENV_PYTHON) else sys.executable
     print(f"Using Python runtime: {python_exec}")
-    print("Starting FastAPI server at http://127.0.0.1:8000 ...")
+    print("Starting FastAPI server at http://127.0.0.1:8001 ...")
     
     # Auto-open browser after 1.5 seconds
     def open_browser():
         import time
         time.sleep(1.5)
-        webbrowser.open("http://127.0.0.1:8000")
+        webbrowser.open("http://127.0.0.1:8001")
 
     import threading
     threading.Thread(target=open_browser, daemon=True).start()
@@ -32,7 +32,7 @@ def main():
         "-m", "uvicorn",
         "app.main:app",
         "--host", "127.0.0.1",
-        "--port", "8000",
+        "--port", "8001",
         "--reload"
     ]
     subprocess.run(cmd, cwd=BACKEND_DIR)
