@@ -1,0 +1,51 @@
+encounter_id,patient_id,age_group,gender,primary_condition,baseline_systolic,baseline_diastolic,max_glucose_serum,a1c_result,medication_titrated,outpatient_followups_count,care_task_adherence_pct,readmitted_30days,clinical_risk_tier,swasthya_protocol_match
+1001,UCI-PT-001,[50-60),Male,Hypertension,168,102,Norm,>8,No,0,32.5,YES,High Risk,RULE-HTN-001
+1002,UCI-PT-002,[60-70),Female,Type 2 Diabetes,136,88,>200,>8,No,0,28.0,YES,High Risk,RULE-GLU-001
+1003,UCI-PT-003,[50-60),Male,Dual (HTN+T2D),164,98,>300,>8,No,1,41.0,YES,High Risk,RULE-DUAL-001
+1004,UCI-PT-004,[70-80),Female,Hypertension,162,96,Norm,None,No,0,30.0,YES,High Risk,RULE-HTN-001
+1005,UCI-PT-005,[40-50),Male,Type 2 Diabetes,130,84,>300,>7,No,0,35.0,YES,High Risk,RULE-GLU-001
+1006,UCI-PT-006,[60-70),Male,Dual (HTN+T2D),158,98,>200,>8,No,0,25.0,YES,High Risk,RULE-DUAL-001
+1007,UCI-PT-007,[50-60),Female,Hypertension,172,104,Norm,None,No,0,20.0,YES,High Risk,RULE-HTN-001
+1008,UCI-PT-008,[60-70),Female,Type 2 Diabetes,128,82,>300,>8,No,1,45.0,YES,High Risk,RULE-GLU-001
+1009,UCI-PT-009,[70-80),Male,Dual (HTN+T2D),166,100,>200,>8,No,0,31.0,YES,High Risk,RULE-DUAL-001
+1010,UCI-PT-010,[50-60),Male,Hypertension,164,98,Norm,>7,No,0,38.0,YES,High Risk,RULE-HTN-001
+1011,UCI-PT-011,[50-60),Female,Hypertension,132,82,Norm,Norm,Yes,4,88.5,NO,Controlled,ICMR-HTN-2023
+1012,UCI-PT-012,[60-70),Male,Type 2 Diabetes,115,78,Norm,Norm,Yes,5,92.0,NO,Controlled,ICMR-T2D-2023
+1013,UCI-PT-013,[40-50),Female,Hypertension,124,80,Norm,Norm,Yes,3,95.0,NO,Controlled,ICMR-HTN-2023
+1014,UCI-PT-014,[50-60),Male,Type 2 Diabetes,118,80,Norm,Norm,Yes,4,86.0,NO,Controlled,ICMR-T2D-2023
+1015,UCI-PT-015,[60-70),Female,Dual (HTN+T2D),134,84,Norm,Norm,Yes,6,91.5,NO,Controlled,ICMR-DUAL-2023
+1016,UCI-PT-016,[50-60),Male,Hypertension,128,82,Norm,Norm,Yes,4,89.0,NO,Controlled,ICMR-HTN-2023
+1017,UCI-PT-017,[40-50),Male,Type 2 Diabetes,112,76,Norm,Norm,Yes,5,94.0,NO,Controlled,ICMR-T2D-2023
+1018,UCI-PT-018,[70-80),Female,Hypertension,130,80,Norm,Norm,Yes,4,87.0,NO,Controlled,ICMR-HTN-2023
+1019,UCI-PT-019,[60-70),Male,Dual (HTN+T2D),136,86,Norm,Norm,Yes,5,90.0,NO,Controlled,ICMR-DUAL-2023
+1020,UCI-PT-020,[50-60),Female,Hypertension,122,78,Norm,Norm,Yes,6,96.0,NO,Controlled,ICMR-HTN-2023
+1021,UCI-PT-021,[60-70),Male,Type 2 Diabetes,142,88,>200,>7,Yes,2,65.0,NO,Needs Review,RULE-MISSING-001
+1022,UCI-PT-022,[50-60),Female,Hypertension,144,90,Norm,None,No,2,62.0,NO,Needs Review,RULE-MISSING-001
+1023,UCI-PT-023,[40-50),Male,Dual (HTN+T2D),148,92,>200,>7,Yes,2,58.0,NO,Needs Review,RULE-MISSING-001
+1024,UCI-PT-024,[60-70),Female,Type 2 Diabetes,140,86,Norm,>7,No,1,55.0,YES,High Risk,RULE-GLU-001
+1025,UCI-PT-025,[50-60),Male,Hypertension,146,92,Norm,None,Yes,2,68.0,NO,Needs Review,RULE-MISSING-001
+1026,UCI-PT-026,[60-70),Female,Hypertension,124,82,Norm,Norm,Yes,5,93.0,NO,Controlled,ICMR-CARE-2023
+1027,UCI-PT-027,[70-80),Male,Dual (HTN+T2D),172,99,>200,>8,No,0,27.0,YES,High Risk,RULE-GLU-001
+1028,UCI-PT-028,[40-50),Female,Hypertension,126,84,Norm,Norm,Yes,4,95.0,NO,Controlled,ICMR-CARE-2023
+1029,UCI-PT-029,[50-60),Male,Type 2 Diabetes,127,85,Norm,Norm,Yes,5,96.0,NO,Controlled,ICMR-CARE-2023
+1030,UCI-PT-030,[60-70),Female,Hypertension,160,102,>200,>8,No,0,30.0,YES,High Risk,RULE-HTN-001
+1031,UCI-PT-031,[70-80),Male,Type 2 Diabetes,129,77,Norm,Norm,Yes,4,83.0,NO,Controlled,ICMR-CARE-2023
+1032,UCI-PT-032,[40-50),Female,Hypertension,130,78,Norm,Norm,Yes,5,84.0,NO,Controlled,ICMR-CARE-2023
+1033,UCI-PT-033,[50-60),Male,Dual (HTN+T2D),163,97,>200,>8,No,0,33.0,YES,High Risk,RULE-GLU-001
+1034,UCI-PT-034,[60-70),Female,Hypertension,132,80,Norm,Norm,Yes,4,86.0,NO,Controlled,ICMR-CARE-2023
+1035,UCI-PT-035,[70-80),Male,Type 2 Diabetes,133,81,Norm,Norm,Yes,5,87.0,NO,Controlled,ICMR-CARE-2023
+1036,UCI-PT-036,[40-50),Female,Hypertension,166,100,>200,>8,No,0,36.0,YES,High Risk,RULE-HTN-001
+1037,UCI-PT-037,[50-60),Male,Type 2 Diabetes,135,83,Norm,Norm,Yes,4,89.0,NO,Controlled,ICMR-CARE-2023
+1038,UCI-PT-038,[60-70),Female,Hypertension,136,84,Norm,Norm,Yes,5,90.0,NO,Controlled,ICMR-CARE-2023
+1039,UCI-PT-039,[70-80),Male,Dual (HTN+T2D),169,103,>200,>8,No,0,39.0,YES,High Risk,RULE-GLU-001
+1040,UCI-PT-040,[40-50),Female,Hypertension,118,76,Norm,Norm,Yes,4,92.0,NO,Controlled,ICMR-CARE-2023
+1041,UCI-PT-041,[50-60),Male,Type 2 Diabetes,119,77,Norm,Norm,Yes,5,93.0,NO,Controlled,ICMR-CARE-2023
+1042,UCI-PT-042,[60-70),Female,Hypertension,172,98,>200,>8,No,0,42.0,YES,High Risk,RULE-HTN-001
+1043,UCI-PT-043,[70-80),Male,Type 2 Diabetes,121,79,Norm,Norm,Yes,4,95.0,NO,Controlled,ICMR-CARE-2023
+1044,UCI-PT-044,[40-50),Female,Hypertension,122,80,Norm,Norm,Yes,5,96.0,NO,Controlled,ICMR-CARE-2023
+1045,UCI-PT-045,[50-60),Male,Dual (HTN+T2D),160,101,>200,>8,No,0,45.0,YES,High Risk,RULE-GLU-001
+1046,UCI-PT-046,[60-70),Female,Hypertension,124,82,Norm,Norm,Yes,4,83.0,NO,Controlled,ICMR-CARE-2023
+1047,UCI-PT-047,[70-80),Male,Type 2 Diabetes,125,83,Norm,Norm,Yes,5,84.0,NO,Controlled,ICMR-CARE-2023
+1048,UCI-PT-048,[40-50),Female,Hypertension,163,96,>200,>8,No,0,48.0,YES,High Risk,RULE-HTN-001
+1049,UCI-PT-049,[50-60),Male,Type 2 Diabetes,127,85,Norm,Norm,Yes,4,86.0,NO,Controlled,ICMR-CARE-2023
+1050,UCI-PT-050,[60-70),Female,Hypertension,128,76,Norm,Norm,Yes,5,87.0,NO,Controlled,ICMR-CARE-2023
