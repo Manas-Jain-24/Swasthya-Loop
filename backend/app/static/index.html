@@ -1450,13 +1450,44 @@
 
     async function confirmResolveFlag() {
       if (!pendingFlagToResolve) return;
+      const flagId = pendingFlagToResolve;
+      const noteInput = document.getElementById("resolve-note-input");
+      const note = noteInput ? noteInput.value.trim() : "";
+      
       try {
-        await fetch(`${API_BASE}/followups/${pendingFlagToResolve}/resolve`, { method: "PATCH" });
+        const res = await fetch(`${API_BASE}/followups/${flagId}/resolve`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note: note })
+        });
+        
+        if (!res.ok) {
+          showToast("Failed to resolve flag. Please try again.", "error");
+          return;
+        }
+
+        // Optimistically remove from clinicFlags immediately
+        if (clinicFlags) {
+          clinicFlags = clinicFlags.filter(f => f.id !== flagId);
+        }
+
         closeResolveModal();
+        if (noteInput) noteInput.value = "";
         showToast("Triage flag resolved & clinical audit logged", "success");
+        
+        // Refresh UI components immediately
+        updateHeaderStats();
+        renderOverview();
+        renderTriageTable();
+        
+        // Full backend sync
         await refreshData();
+        if (currentPatientId) {
+          loadPatientChart(currentPatientId);
+        }
       } catch (err) {
         console.error("Error resolving flag:", err);
+        showToast("Error connecting to server.", "error");
       }
     }
 

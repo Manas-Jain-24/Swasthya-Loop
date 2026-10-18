@@ -134,6 +134,32 @@ def resolve_followup(flag_id: str, db: Session = Depends(get_db)):
     if not flag:
         raise HTTPException(status_code=404, detail="Follow-up flag not found.")
     flag.status = "resolved"
+
+    # If this flag was for an overdue task, automatically mark the corresponding care task as completed!
+    if flag.category == "missing_task" or flag.source_rule_id == "rule-missing-reading-v1":
+        pending_tasks = db.query(CareTask).filter(
+            CareTask.patient_id == flag.patient_id,
+            CareTask.status == "pending"
+        ).all()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        
+        # Match task title in reason
+        matched = False
+        for t in pending_tasks:
+            if t.title in flag.reason:
+                t.status = "completed"
+                t.completed_at = now_iso
+                matched = True
+                break
+        
+        # If not exact match, complete the earliest overdue task
+        if not matched:
+            for t in pending_tasks:
+                if t.due_at <= now_iso:
+                    t.status = "completed"
+                    t.completed_at = now_iso
+                    break
+
     db.commit()
     db.refresh(flag)
     return flag
