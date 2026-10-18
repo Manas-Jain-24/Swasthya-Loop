@@ -185,7 +185,7 @@
   <!-- ============================================== -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Sub-bar: Demo Cohort Quick Switcher & Active Role Context -->
+    <!-- Sub-bar: Demo Cohort Quick Switcher & Global Quick Actions -->
     <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
       <div class="flex items-center space-x-2">
         <span class="text-slate-500 font-medium flex items-center space-x-1">
@@ -193,22 +193,41 @@
           <span>Active Patient Context:</span>
         </span>
         <select id="quick-patient-select" onchange="selectPatientFromDropdown(this.value)" class="bg-slate-50 font-semibold text-slate-800 border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
-          <option value="patient-001">Demo Patient A (Hypertension, Mild)</option>
-          <option value="patient-002">Demo Patient B (Type 2 Diabetes, Overdue Task)</option>
-          <option value="patient-003">Rajesh Sharma (Stage 2 HTN Crisis Spike: 168/102)</option>
-          <option value="patient-004">Sunita Patel (T2D Well-Controlled, Clean)</option>
+          <option value="patient-001">Ananya Deshmukh (Hypertension - Mild)</option>
+          <option value="patient-002">Vikramaditya Rao (Type 2 Diabetes - Overdue Task)</option>
+          <option value="patient-003">Rajesh Sharma (Stage 2 HTN Crisis: 168/102)</option>
+          <option value="patient-004">Sunita Patel (T2D Well-Controlled, Target 104)</option>
           <option value="patient-005">Amitav Verma (Dual: HTN + T2D Multimorbid)</option>
+          <option value="patient-006">Kavita Nambiar (T2D Critical Spike: 284 mg/dL)</option>
+          <option value="patient-007">Meera Krishnan (Hypertension - Remission 116/74)</option>
+          <option value="patient-008">Aarav Mehta (Age 24 - Work Stress Pre-HTN)</option>
+          <option value="patient-009">Harish Chandra (Severe Dual Crisis: 164/98 &amp; 210)</option>
+          <option value="patient-010">Priya Sengupta (Pre-Diabetes Borderline: 118)</option>
         </select>
       </div>
 
-      <div class="flex items-center space-x-2">
-        <span class="px-2.5 py-1 bg-teal-50 border border-teal-200 text-teal-800 rounded-lg font-mono text-[11px] font-semibold flex items-center space-x-1">
-          <i data-lucide="sparkles" class="w-3 h-3 text-teal-600"></i>
-          <span id="gemini-status-indicator">Gemini 3.8 Flash Active</span>
-        </span>
+      <div class="flex items-center space-x-2 flex-wrap">
+        <!-- Bilingual Quick Switcher -->
+        <div class="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200 text-[11px] font-semibold">
+          <button id="global-lang-en" onclick="setBriefingLanguage('en')" class="px-2 py-0.5 rounded-md bg-white text-purple-800 shadow-2xs transition-all cursor-pointer">EN</button>
+          <button id="global-lang-hi" onclick="setBriefingLanguage('hi')" class="px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer">हिन्दी</button>
+        </div>
+
+        <!-- Audio TTS Button in Subbar -->
+        <button onclick="toggleAudioBriefing()" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold transition-all flex items-center space-x-1 cursor-pointer">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5 text-purple-600"></i>
+          <span>🔊 Audio Briefing</span>
+        </button>
+
+        <!-- Clinical Slip PDF Button in Subbar -->
+        <button onclick="openClinicalSlipModal()" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-all flex items-center space-x-1 cursor-pointer">
+          <i data-lucide="printer" class="w-3.5 h-3.5 text-teal-400"></i>
+          <span>🖨️ Clinical Slip (PDF)</span>
+        </button>
+
         <button onclick="exportTriageCSV()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-medium transition-all flex items-center space-x-1 cursor-pointer">
           <i data-lucide="download" class="w-3 h-3 text-slate-600"></i>
-          <span>Export Triage CSV</span>
+          <span>CSV Report</span>
         </button>
       </div>
     </div>
@@ -434,7 +453,7 @@
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <h2 id="chart-patient-name" class="text-lg font-bold text-slate-900">Demo Patient A</h2>
+              <h2 id="chart-patient-name" class="text-lg font-bold text-slate-900">Ananya Deshmukh</h2>
               <span id="chart-condition-pill" class="px-2.5 py-0.5 text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200 rounded-full">Hypertension</span>
               <span id="chart-triage-pill" class="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 rounded-full">Active Surveillance</span>
             </div>
@@ -781,6 +800,28 @@
       lucide.createIcons();
     });
 
+    
+    function syncPatientDropdown() {
+      const sel = document.getElementById("quick-patient-select");
+      if (!sel || !clinicPatients || clinicPatients.length === 0) return;
+      const currentVal = sel.value || currentPatientId;
+      sel.innerHTML = clinicPatients.map(p => {
+        let tag = p.conditions.map(c => c.replace(/_/g, ' ')).join(', ');
+        if (p.id === "patient-001") tag = "Hypertension, Mild";
+        if (p.id === "patient-002") tag = "T2D, Overdue Task";
+        if (p.id === "patient-003") tag = "Stage 2 Crisis 168/102";
+        if (p.id === "patient-004") tag = "T2D Controlled, Target 104";
+        if (p.id === "patient-005") tag = "Dual Multimorbid";
+        if (p.id === "patient-006") tag = "T2D Critical Spike 284";
+        if (p.id === "patient-007") tag = "HTN Remission 116/74";
+        if (p.id === "patient-008") tag = "Age 24, Stress Pre-HTN";
+        if (p.id === "patient-009") tag = "Dual Crisis 164/98 & 210";
+        if (p.id === "patient-010") tag = "Pre-Diabetes Borderline 118";
+        return `<option value="${p.id}">${p.display_name} (${tag})</option>`;
+      }).join('');
+      sel.value = currentVal;
+    }
+
     async function refreshData() {
       try {
         const [overviewRes, patientsRes, followupsRes] = await Promise.all([
@@ -794,6 +835,7 @@
         clinicFlags = followupsRes;
 
         updateHeaderStats();
+        syncPatientDropdown();
         renderOverview();
         renderPatientsTable();
         renderTriageTable();
