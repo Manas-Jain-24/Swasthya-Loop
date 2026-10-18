@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E">
   <title>SwasthyaLoop — Clinical Follow-Up & Care Coordination</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,6 +102,10 @@
             <div class="flex items-center space-x-2">
               <span class="text-lg font-bold tracking-tight text-slate-900">Swasthya<span class="text-teal-600">Loop</span></span>
               <span class="px-2 py-0.5 text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200 rounded-full">CLINICAL MVP</span>
+              <span class="hidden sm:inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                <span>ABDM Sandbox Ready</span>
+              </span>
             </div>
             <p class="text-[11px] text-slate-500 -mt-0.5 font-medium">Closed-Loop Chronic-Care Follow-Up</p>
           </div>
@@ -686,6 +691,11 @@
       <div class="text-xs">
         <label class="block text-slate-700 font-semibold mb-1">Coordinator Follow-Up Action Note</label>
         <textarea id="resolve-note-input" rows="2" placeholder="e.g., Contacted patient via phone. Verified repeat resting BP was 134/86 mmHg. Physician notified." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+        <div class="flex flex-wrap gap-1.5 mt-2">
+          <button type="button" onclick="setResolveNote('Teleconsult completed. Amlodipine titrated to 10mg OD. Next check-in in 48 hours.')" class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[10px] font-semibold rounded-md border border-teal-200 transition-colors cursor-pointer">⚡ Teleconsult &amp; Titration</button>
+          <button type="button" onclick="setResolveNote('Contacted patient via phone. Repeat resting BP was 132/84 mmHg. Vitals stable.')" class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[10px] font-semibold rounded-md border border-teal-200 transition-colors cursor-pointer">⚡ Verified Normal Reading</button>
+          <button type="button" onclick="setResolveNote('Home visit assigned to ASHA health worker. Medication adherence verified.')" class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[10px] font-semibold rounded-md border border-teal-200 transition-colors cursor-pointer">⚡ ASHA Home Visit</button>
+        </div>
       </div>
       <div class="flex items-center justify-end space-x-2 pt-2">
         <button onclick="closeResolveModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer">Cancel</button>
@@ -1346,6 +1356,7 @@
       try {
         await fetch(`${API_BASE}/followups/${pendingFlagToResolve}/resolve`, { method: "PATCH" });
         closeResolveModal();
+        showToast("Triage flag resolved & clinical audit logged", "success");
         await refreshData();
       } catch (err) {
         console.error("Error resolving flag:", err);
@@ -1370,8 +1381,12 @@
       a.href = url;
       a.download = `swasthya_triage_report_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
+      showToast("CSV Triage Report generated and downloaded", "info");
       URL.revokeObjectURL(url);
     }
   </script>
+  <!-- Floating Toast Notifications Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
 </body>
 </html>
