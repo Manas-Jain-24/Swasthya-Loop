@@ -14,6 +14,8 @@ def seed_database(db: Session):
 
     # 1. Patient 001: Ananya Deshmukh (Hypertension - Mild Elevation, Steady Improvement)
     patient_1 = db.query(Patient).filter(Patient.id == "patient-001").first()
+    if patient_1 and ("Demo" in patient_1.display_name):
+        patient_1.display_name = "Ananya Deshmukh"
     if not patient_1:
         patient_1 = Patient(
             id="patient-001",
@@ -80,6 +82,8 @@ def seed_database(db: Session):
 
     # 2. Patient 002: Vikramaditya Rao (Type 2 Diabetes - Overdue Reading Flag)
     patient_2 = db.query(Patient).filter(Patient.id == "patient-002").first()
+    if patient_2 and ("Demo" in patient_2.display_name):
+        patient_2.display_name = "Vikramaditya Rao"
     if not patient_2:
         patient_2 = Patient(
             id="patient-002",
