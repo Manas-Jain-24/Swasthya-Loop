@@ -214,15 +214,15 @@
         </div>
 
         <!-- Audio TTS Button in Subbar -->
-        <button onclick="toggleAudioBriefing()" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold transition-all flex items-center space-x-1 cursor-pointer">
+        <button id="btn-audio-subbar" onclick="toggleAudioBriefing()" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold transition-all flex items-center space-x-1.5 cursor-pointer">
           <i data-lucide="volume-2" class="w-3.5 h-3.5 text-purple-600"></i>
-          <span>🔊 Audio Briefing</span>
+          <span id="subbar-audio-label">Audio Briefing</span>
         </button>
 
         <!-- Clinical Slip PDF Button in Subbar -->
-        <button onclick="openClinicalSlipModal()" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-all flex items-center space-x-1 cursor-pointer">
+        <button onclick="openClinicalSlipModal()" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-all flex items-center space-x-1.5 cursor-pointer">
           <i data-lucide="printer" class="w-3.5 h-3.5 text-teal-400"></i>
-          <span>🖨️ Clinical Slip (PDF)</span>
+          <span>Clinical Slip (PDF)</span>
         </button>
 
         <button onclick="exportTriageCSV()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-medium transition-all flex items-center space-x-1 cursor-pointer">
@@ -1291,6 +1291,10 @@
         }).then(r => r.json());
 
         summaryBox.innerText = res.summary;
+        currentEnglishSummary = res.summary || "";
+        if (currentLanguage === 'hi') {
+          displayCurrentSummary();
+        }
 
         if (res.is_ai_generated) {
           badge.innerText = "Gemini LLM Summary";
@@ -1512,6 +1516,261 @@
       showToast("CSV Triage Report generated and downloaded", "info");
       URL.revokeObjectURL(url);
     }
+
+    // =============================================================
+    // MULTILINGUAL & AUDIO BRIEFING (TTS) ENGINE
+    // =============================================================
+    let currentLanguage = 'en';
+    let isSpeakingAudio = false;
+    let currentEnglishSummary = "";
+    let currentHindiSummary = "";
+
+    const HINDI_SUMMARIES = {
+      "patient-001": "नमस्ते अनन्य जी। डॉ. शर्मा के क्लिनिक द्वारा आपके स्वास्थ्य परीक्षण की समीक्षा की गई है। आपका हालिया रक्तचाप 132/82 दर्ज हुआ है, जो स्थिर और नियंत्रित सीमा में है। कृपया अपनी नियमित सुबह की दवा एम्लोडिपिन 5mg समय पर लेते रहें, भोजन में नमक की मात्रा सीमित रखें और शाम की 20 मिनट की सैर जारी रखें। आपका अगला क्लिनिकल चेक-अप 24 अक्टूबर को निर्धारित है।",
+      "patient-002": "नमस्ते विक्रमादित्य जी। आपके रक्त शर्करा 140 मिलीग्राम प्रति डेसीलीटर की समीक्षा की गई है। आपका दोपहर के भोजन के बाद का परीक्षण लंबित है। कृपया अपना निर्धारित पोस्ट-लंच ग्लूकोज लॉग करें, मेटफॉर्मिन 500mg समय पर लें और कम ग्लाइसेमिक आहार का पालन करें।",
+      "patient-003": "नमस्ते राजेश जी। डॉ. शर्मा के क्लिनिक द्वारा आपके हालिया रक्तचाप 168/102 की समीक्षा की गई है। यह आपातकालीन सुरक्षा सीमा से ऊपर है। तत्काल टेलीकंसल्ट प्रोटोकॉल के अनुसार आपकी शाम की दवा एम्लोडिपिन 10mg निर्धारित की गई है। कृपया इसे रात के भोजन के बाद लें, भोजन में नमक बिल्कुल कम करें और कल सुबह 8 बजे अपना रक्तचाप दोबारा मापें।",
+      "patient-004": "नमस्ते सुनीता जी। आपके उपवास रक्त शर्करा 104 मिलीग्राम का स्तर बहुत अच्छा और पूर्णतः सामान्य सीमा में है। कोई भी आपातकालीन चेतावनी नहीं है। अपनी नियमित दिनचर्या, आहार और दवा जारी रखें।",
+      "patient-005": "नमस्ते अमिताभ जी। आपके रक्तचाप 146/92 और रक्त शर्करा 178 मिलीग्राम की समीक्षा की गई है। आपका सुबह का डुअल पैनल परीक्षण 2 दिनों से छूटा हुआ है। कृपया आज शाम का परीक्षण अवश्य पूरा करें और दोनों दवाएं समय पर लें।",
+      "patient-006": "नमस्ते कविता जी। आपके हालिया पोस्ट-मील रक्त शर्करा 284 मिलीग्राम की समीक्षा की गई है। यह उच्च स्तर पर है और तत्काल डॉक्टर समीक्षा की आवश्यकता है। कृपया अपने इंसुलिन ग्लारजीन की 12 यूनिट खुराक तुरंत लें, पर्याप्त पानी पिएं और मीठे खाद्य पदार्थों से परहेज करें। स्वास्थ्य कार्यकर्ता आपसे संपर्क करेंगे।",
+      "patient-007": "नमस्ते मीरा जी। आपका रक्तचाप 116/74 बहुत ही उत्कृष्ट है और आप पूर्ण सुधार की स्थिति में हैं। आपकी जीवनशैली और नमक नियंत्रण बहुत प्रभावी रहा है। इसे बनाए रखें।",
+      "patient-008": "नमस्ते आरव जी। आपके कार्य तनाव के कारण रक्तचाप 136/86 दर्ज हुआ है जो प्री-हाइपरटेंशन की श्रेणी में है। कृपया कैफीन कम करें, नियमित 7 घंटे की नींद लें और शाम को विश्राम का समय निकालें।",
+      "patient-009": "नमस्ते हरीश जी। आपके रक्तचाप 164/98 और शर्करा 210 दोनों उच्च स्तर पर हैं। यह गंभीर स्थिति है। कृपया अपनी दोनों दवाएं तुरंत लें और आज ही क्लिनिक में टेलीकंसल्ट के लिए उपस्थित हों।",
+      "patient-010": "नमस्ते प्रिया जी। आपका रक्त शर्करा 118 बॉर्डरलाइन प्री-डायबिटीज दर्शाता है। दैनिक 30 मिनट का व्यायाम और आहार में फाइबर की मात्रा बढ़ाना आपके लिए लाभकारी रहेगा।"
+    };
+
+    function setBriefingLanguage(lang) {
+      currentLanguage = lang;
+      
+      // Update top subbar language switcher
+      const gBtnEn = document.getElementById("global-lang-en");
+      const gBtnHi = document.getElementById("global-lang-hi");
+      if (gBtnEn && gBtnHi) {
+        if (lang === 'hi') {
+          gBtnHi.className = "px-2 py-0.5 rounded-md bg-white text-purple-800 shadow-2xs transition-all cursor-pointer font-bold";
+          gBtnEn.className = "px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+        } else {
+          gBtnEn.className = "px-2 py-0.5 rounded-md bg-white text-purple-800 shadow-2xs transition-all cursor-pointer font-bold";
+          gBtnHi.className = "px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+        }
+      }
+
+      // Update Chart AI summary card language buttons if present
+      const btnEn = document.getElementById("lang-btn-en");
+      const btnHi = document.getElementById("lang-btn-hi");
+      if (btnEn && btnHi) {
+        if (lang === 'hi') {
+          btnHi.className = "px-2 py-0.5 rounded-md bg-white text-purple-800 shadow-2xs transition-all cursor-pointer font-bold";
+          btnEn.className = "px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+        } else {
+          btnEn.className = "px-2 py-0.5 rounded-md bg-white text-purple-800 shadow-2xs transition-all cursor-pointer font-bold";
+          btnHi.className = "px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+        }
+      }
+
+      // Update audio button label
+      const audioSubbarLabel = document.getElementById("subbar-audio-label");
+      if (audioSubbarLabel) {
+        audioSubbarLabel.innerText = lang === 'hi' ? 'ऑडियो सुनें' : 'Audio Briefing';
+      }
+
+      displayCurrentSummary();
+      updateAudioButton(false);
+      showToast(`Switched summary language to ${lang === 'hi' ? 'हिन्दी (Hindi)' : 'English'}`, "info");
+    }
+
+    function displayCurrentSummary() {
+      const summaryBox = document.getElementById("chart-ai-summary-text");
+      if (!summaryBox) return;
+      const pId = currentPatientId || document.getElementById("quick-patient-select")?.value || "patient-001";
+      if (currentLanguage === 'hi') {
+        const hiText = HINDI_SUMMARIES[pId] || 
+          `नमस्ते। आपके हालिया स्वास्थ्य परीक्षण की समीक्षा की गई है। कृपया अपनी निर्धारित दवाओं का नियमित सेवन करें और अगले परामर्श की तैयारी करें।`;
+        currentHindiSummary = hiText;
+        summaryBox.innerHTML = `<div class="font-sans leading-relaxed text-slate-800 font-medium">${hiText}</div>`;
+      } else {
+        summaryBox.innerHTML = currentEnglishSummary || "Clinical AI summary loaded.";
+      }
+    }
+
+    function toggleAudioBriefing() {
+      if (!('speechSynthesis' in window)) {
+        showToast("Speech synthesis not supported in this browser", "error");
+        return;
+      }
+      if (isSpeakingAudio) {
+        window.speechSynthesis.cancel();
+        updateAudioButton(false);
+        showToast("Audio playback stopped", "info");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const pId = currentPatientId || document.getElementById("quick-patient-select")?.value || "patient-001";
+      const p = clinicPatients.find(pt => pt.id === pId);
+      const pName = p ? p.display_name : "Patient";
+
+      let textToSpeak = "";
+      if (currentLanguage === 'hi') {
+        textToSpeak = currentHindiSummary || HINDI_SUMMARIES[pId] || `नमस्ते ${pName} जी। आपके स्वास्थ्य परीक्षण की समीक्षा की गई है। कृपया अपनी नियमित दवाएं समय पर लें।`;
+      } else {
+        const rawSummary = currentEnglishSummary ? currentEnglishSummary.replace(/<[^>]*>/g, '') : "";
+        textToSpeak = rawSummary || `Clinical briefing for ${pName}. Chronic disease vital monitoring is active and evaluated under clinical decision support protocols.`;
+      }
+
+      const utter = new SpeechSynthesisUtterance(textToSpeak);
+      utter.rate = currentLanguage === 'hi' ? 0.9 : 0.95;
+      utter.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+
+      const voices = window.speechSynthesis.getVoices();
+      if (currentLanguage === 'hi') {
+        const hiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+        if (hiVoice) utter.voice = hiVoice;
+      } else {
+        const inVoice = voices.find(v => v.lang.includes('IN') || v.name.includes('India'));
+        if (inVoice) utter.voice = inVoice;
+      }
+
+      utter.onstart = () => updateAudioButton(true);
+      utter.onend = () => updateAudioButton(false);
+      utter.onerror = (e) => {
+        console.error("Audio TTS error:", e);
+        updateAudioButton(false);
+      };
+
+      window.speechSynthesis.speak(utter);
+      showToast(`🔊 Playing voice briefing in ${currentLanguage === 'hi' ? 'Hindi (हिन्दी)' : 'English'}...`, "ai");
+    }
+
+    function updateAudioButton(speaking) {
+      isSpeakingAudio = speaking;
+      
+      // Update subbar audio button
+      const subbarBtn = document.getElementById("btn-audio-subbar");
+      if (subbarBtn) {
+        if (speaking) {
+          subbarBtn.className = "px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-300 rounded-lg font-semibold transition-all flex items-center space-x-1.5 cursor-pointer animate-pulse";
+          subbarBtn.innerHTML = `<i data-lucide="square" class="w-3.5 h-3.5 text-rose-600 fill-current"></i><span>Stop Voice (रोकें)</span>`;
+        } else {
+          subbarBtn.className = "px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold transition-all flex items-center space-x-1.5 cursor-pointer";
+          subbarBtn.innerHTML = `<i data-lucide="volume-2" class="w-3.5 h-3.5 text-purple-600"></i><span id="subbar-audio-label">${currentLanguage === 'hi' ? 'ऑडियो सुनें' : 'Audio Briefing'}</span>`;
+        }
+      }
+
+      // Update Chart AI summary card button
+      const chartBtn = document.getElementById("btn-audio-briefing");
+      const wave = document.getElementById("audio-wave-anim");
+      if (chartBtn) {
+        if (speaking) {
+          chartBtn.innerHTML = `<i data-lucide="square" class="w-3.5 h-3.5 text-rose-500 fill-current"></i><span>Stop Voice (रोकें)</span>`;
+          chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center space-x-1.5 cursor-pointer shadow-xs animate-pulse";
+          if (wave) wave.classList.remove("hidden");
+        } else {
+          chartBtn.innerHTML = `<i data-lucide="volume-2" class="w-3.5 h-3.5 text-purple-600"></i><span>Listen Audio (${currentLanguage === 'hi' ? 'ऑडियो सुनें' : 'Audio Briefing'})</span>`;
+          chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all";
+          if (wave) wave.classList.add("hidden");
+        }
+      }
+      lucide.createIcons();
+    }
+
+    // =============================================================
+    // CLINICAL FOLLOW-UP SLIP (OPD DISCHARGE SLIP)
+    // =============================================================
+    async function openClinicalSlipModal() {
+      const pId = currentPatientId || document.getElementById("quick-patient-select")?.value || "patient-001";
+      let p = clinicPatients.find(pt => pt.id === pId);
+      if (!p && clinicPatients && clinicPatients.length > 0) p = clinicPatients[0];
+      if (!p) {
+        showToast("No patient selected", "error");
+        return;
+      }
+
+      // Populate demographics
+      const elName = document.getElementById("slip-patient-name");
+      if (elName) elName.innerText = p.display_name;
+      const elId = document.getElementById("slip-patient-id");
+      if (elId) elId.innerText = `UHID: ${p.id.toUpperCase()}`;
+      const elDemo = document.getElementById("slip-patient-demo");
+      if (elDemo) elDemo.innerText = `${p.age || 52} Yrs / ${p.gender || 'Adult'}`;
+      const elAbha = document.getElementById("slip-patient-abha");
+      if (elAbha) elAbha.innerText = `${p.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
+      const elCond = document.getElementById("slip-patient-cond");
+      if (elCond) elCond.innerText = p.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ');
+      const elProto = document.getElementById("slip-patient-protocol");
+      if (elProto) elProto.innerText = p.conditions.includes("hypertension") ? "ICMR-HTN-2023 / Stage 2 Surveillance" : "ICMR-T2D-2023 / Glycemic Protocol";
+      
+      const now = new Date();
+      const elDate = document.getElementById("slip-print-date");
+      if (elDate) elDate.innerText = `Date: ${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} IST`;
+
+      // Fetch patient readings if not populated
+      try {
+        const readingsRes = await fetch(`${API_BASE}/patients/${p.id}/readings`).then(r => r.json());
+        const tbody = document.getElementById("slip-vitals-table-body");
+        if (tbody) {
+          if (readingsRes && readingsRes.length > 0) {
+            tbody.innerHTML = readingsRes.slice(-4).reverse().map(r => {
+              const val = r.type === "blood_pressure" ? `${r.systolic_mmhg}/${r.diastolic_mmhg} mmHg` : `${r.value} mg/dL`;
+              const isHigh = (r.systolic_mmhg && r.systolic_mmhg >= 160) || (r.value && r.value >= 180);
+              return `
+                <tr>
+                  <td class="py-1.5 px-3 text-slate-500 font-mono">${(r.recorded_at || '').slice(0, 10)}</td>
+                  <td class="py-1.5 px-3 font-bold ${isHigh ? 'text-rose-700' : 'text-slate-800'}">${val}</td>
+                  <td class="py-1.5 px-3">${isHigh ? '<span class="text-rose-600 font-semibold">Crisis Alert Spike</span>' : '<span class="text-emerald-700 font-medium">Controlled Target</span>'}</td>
+                  <td class="py-1.5 px-3 text-slate-600">${isHigh ? 'Immediate Titration Required' : 'Maintain Current Dose'}</td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            tbody.innerHTML = `<tr><td colspan="4" class="p-2 text-center text-slate-400">No telemetry readings recorded.</td></tr>`;
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching readings for slip:", err);
+      }
+
+      // Populate doctor instructions & medication titration
+      const instBox = document.getElementById("slip-instructions-body");
+      if (instBox) {
+        if (p.id === "patient-003") {
+          instBox.innerHTML = `
+            <div>• <strong>Rx Adjustment:</strong> Tab. Amlodipine 10mg OD (Take 1 tablet after dinner with warm water).</div>
+            <div>• <strong>Dietary Restriction:</strong> Strict dietary sodium restriction (&lt; 2.0g/day). Strictly avoid papad, pickles, and processed snacks.</div>
+            <div>• <strong>Telemetry Schedule:</strong> Mandatory repeat resting BP reading tomorrow morning at 08:00 AM before breakfast.</div>
+            <div>• <strong>Next Review:</strong> Scheduled for teleconsultation review in 72 hours.</div>
+          `;
+        } else if (p.conditions.includes("type_2_diabetes")) {
+          instBox.innerHTML = `
+            <div>• <strong>Rx Orders:</strong> Tab. Metformin 500mg BD after breakfast and dinner.</div>
+            <div>• <strong>Dietary Guidance:</strong> Low glycemic index meals; minimum 30 minutes brisk walking daily.</div>
+            <div>• <strong>Telemetry Schedule:</strong> Log fasting glucose tomorrow morning; log 2-hour post-prandial reading after lunch.</div>
+            <div>• <strong>Next Review:</strong> Regular scheduled follow-up on Oct 26, 2026.</div>
+          `;
+        } else {
+          instBox.innerHTML = `
+            <div>• <strong>Rx Orders:</strong> Continue regular morning prescribed medication with water.</div>
+            <div>• <strong>Routine Follow-up:</strong> Log daily morning blood pressure reading in SwasthyaLoop portal.</div>
+            <div>• <strong>Next Review:</strong> Scheduled OPD visit on Oct 24, 2026.</div>
+          `;
+        }
+      }
+
+      const modal = document.getElementById("clinical-slip-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+      }
+      lucide.createIcons();
+    }
+
+    function closeClinicalSlipModal() {
+      const modal = document.getElementById("clinical-slip-modal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function triggerPrintSlip() {
+      window.print();
+    }
+
   </script>
   <!-- Floating Toast Notifications Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
