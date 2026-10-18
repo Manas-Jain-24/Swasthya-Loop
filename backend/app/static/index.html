@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwasthyaLoop — AI-Assisted Chronic-Care Follow-up</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            clinical: {
+              card: '#1e293b',
+              border: '#334155',
+              bg: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b1120;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .pulse-subtle {
+      animation: pulseSubtle 3s infinite ease-in-out;
+    }
+    @keyframes pulseSubtle {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TOP NAV BAR -->
+  <header class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <i data-lucide="activity" class="w-6 h-6 text-white stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-bold tracking-tight text-white">Swasthya<span class="text-brand-400">Loop</span></span>
+            <span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">MVP PROTOTYPE</span>
+          </div>
+          <p class="text-[11px] text-slate-400 -mt-0.5">AI-Assisted Chronic-Care Follow-up</p>
+        </div>
+      </div>
+
+      <!-- Center: Role / Patient Switcher -->
+      <div class="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shadow-inner">
+        <button id="btn-patient-a" onclick="switchView('patient-001')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm">
+          <i data-lucide="user" class="w-3.5 h-3.5"></i>
+          <span>Patient A (Hypertension)</span>
+        </button>
+        <button id="btn-patient-b" onclick="switchView('patient-002')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
+          <i data-lucide="user" class="w-3.5 h-3.5"></i>
+          <span>Patient B (Diabetes)</span>
+        </button>
+        <button id="btn-coordinator" onclick="switchView('coordinator')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+          <span>Coordinator Triage</span>
+          <span id="nav-flag-count" class="ml-1 px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded-full text-[10px] font-bold">1</span>
+        </button>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="flex items-center space-x-3">
+        <button onclick="openReadingModal()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-semibold rounded-lg shadow-md shadow-emerald-500/20 flex items-center space-x-1.5 transition-all active:scale-95">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Log Reading</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTICE BANNER -->
+  <div class="bg-slate-900 border-b border-slate-800 py-1.5 px-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between text-[11px] text-slate-400">
+      <div class="flex items-center space-x-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 pulse-subtle"></span>
+        <span><b>Synthetic Clinical Sandbox:</b> Built for 24-Hour Hackathon Demonstration. Zero real patient PII. Traceable rules only.</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-slate-500">FastAPI backend connected</span>
+        <span class="text-slate-400">Deterministic Rule Engine: <span class="text-emerald-400 font-semibold">Active</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ============================================== -->
+    <!-- VIEW 1 & 2: PATIENT DASHBOARD (A OR B) -->
+    <!-- ============================================== -->
+    <div id="patient-view" class="space-y-6">
+      
+      <!-- Patient Profile Banner -->
+      <div class="glass-panel rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center space-x-4">
+            <div id="patient-avatar" class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-xl font-bold text-indigo-400">
+              PA
+            </div>
+            <div>
+              <div class="flex items-center space-x-3">
+                <h1 id="patient-name" class="text-xl font-bold text-white tracking-tight">Demo Patient A</h1>
+                <span id="patient-condition-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Hypertension Care Plan
+                </span>
+                <span class="text-xs text-slate-400">Age: <span id="patient-age">56</span></span>
+              </div>
+              <p id="patient-plan-subtitle" class="text-xs text-slate-400 mt-1 flex items-center space-x-2">
+                <span>Active Plan: Daily Blood Pressure Monitoring</span>
+                <span>•</span>
+                <span class="text-brand-400">Plan ID: plan-001</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Telemetry Highlights -->
+          <div class="flex items-center space-x-3">
+            <div class="glass-card px-4 py-2.5 rounded-xl text-center">
+              <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Next Appointment</span>
+              <span id="stat-next-appt" class="text-xs font-semibold text-white block mt-0.5">Oct 24, 2026</span>
+            </div>
+            <div class="glass-card px-4 py-2.5 rounded-xl text-center">
+              <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Tasks Due Today</span>
+              <span id="stat-tasks-summary" class="text-xs font-semibold text-emerald-400 block mt-0.5">1 of 2 Done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Card 1: Latest Reading -->
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium">Latest Measurement</span>
+            <i data-lucide="heart-pulse" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span id="kpi-latest-val" class="text-2xl font-bold text-white font-mono">132/82</span>
+            <span id="kpi-latest-unit" class="text-xs text-slate-400">mmHg</span>
+          </div>
+          <div class="mt-2 flex items-center space-x-1.5 text-[11px] text-emerald-400">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span id="kpi-latest-meta">Recorded Today, 08:30 AM</span>
+          </div>
+        </div>
+
+        <!-- Card 2: 7-Day Trend Average -->
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium">Trajectory & Trend</span>
+            <i data-lucide="trending-down" class="w-4 h-4 text-brand-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span id="kpi-trend-val" class="text-2xl font-bold text-white font-mono">-6 mmHg</span>
+            <span class="text-xs text-slate-400">systolic drift</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400">
+            <span>5 readings logged this week</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Care Tasks Adherence -->
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium">Care Tasks Compliance</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-teal-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span id="kpi-task-rate" class="text-2xl font-bold text-white font-mono">100%</span>
+            <span class="text-xs text-slate-400">routine tasks</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400">
+            <span>Next: Sodium log at 07:00 PM</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Open Follow-Up Items -->
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-xs font-medium">Follow-Up Action Items</span>
+            <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span id="kpi-flags-count" class="text-2xl font-bold text-emerald-400 font-mono">0</span>
+            <span class="text-xs text-slate-400">active alerts</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-400">
+            <span id="kpi-flags-status">No unresolved alerts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Columns: Chart & Care Tasks -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left 2 Cols: Interactive Trend Chart & Plain-Language Summary -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Chart Panel -->
+          <div class="glass-panel p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 id="chart-title" class="text-sm font-semibold text-white">Blood Pressure Longitudinal Trend</h3>
+                <p class="text-xs text-slate-400">Chronological history with clinical target envelope</p>
+              </div>
+              <span class="px-2.5 py-1 text-[11px] rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
+                5 Recorded Logs
+              </span>
+            </div>
+            
+            <div class="relative h-64 w-full">
+              <canvas id="vitalsChart"></canvas>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-3">
+              <div class="flex items-center space-x-3">
+                <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> <span>Systolic / Value</span></span>
+                <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-full bg-teal-400 inline-block"></span> <span>Diastolic</span></span>
+              </div>
+              <span class="text-slate-500">Source: Manual Entry & Meter Sync</span>
+            </div>
+          </div>
+
+          <!-- Plain-Language Summary Card (Constrained AI + Deterministic Fallback) -->
+          <div class="glass-panel p-5 rounded-2xl border-l-4 border-l-brand-500 shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-brand-400"></i>
+                <h3 class="text-sm font-semibold text-white">AI-Assisted Plain-Language Summary</h3>
+                <span id="summary-badge" class="px-2 py-0.5 text-[10px] rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Deterministic Fallback
+                </span>
+              </div>
+              <button onclick="refreshSummary()" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div id="summary-content" class="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+              Loading structured facts and care plan summary...
+            </div>
+
+            <!-- Structured Facts Used -->
+            <div class="mt-3">
+              <span class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider block mb-1.5">Approved Facts Grounded In Summary:</span>
+              <div id="summary-facts-tags" class="flex flex-wrap gap-1.5">
+                <!-- tags injected here -->
+              </div>
+            </div>
+
+            <!-- Safety Guardrail Note -->
+            <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-start space-x-2 text-[10px] text-slate-400">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+              <span><b>Auditable Guardrail:</b> The AI engine is strictly constrained to rephrasing recorded facts. It is prohibited from diagnosing, altering medication doses, or overriding clinical rules.</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right 1 Col: Care Tasks & Open Flags -->
+        <div class="space-y-6">
+
+          <!-- Care Plan Tasks List -->
+          <div class="glass-panel p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-semibold text-white">Today's Care Tasks</h3>
+                <p class="text-xs text-slate-400">Self-monitoring care plan items</p>
+              </div>
+              <span class="text-[11px] text-slate-400">Click to toggle</span>
+            </div>
+
+            <div id="tasks-list" class="space-y-2.5">
+              <!-- Tasks will be rendered dynamically -->
+              <div class="text-xs text-slate-500 py-4 text-center">Loading tasks...</div>
+            </div>
+          </div>
+
+          <!-- Active Follow-up Flags for this patient -->
+          <div class="glass-panel p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-semibold text-white">Active Follow-up Flags</h3>
+                <p class="text-xs text-slate-400">Traceable rules triggered</p>
+              </div>
+              <span id="patient-flag-indicator" class="px-2 py-0.5 text-[10px] rounded-full font-bold bg-slate-800 text-slate-400">
+                0 Active
+              </span>
+            </div>
+
+            <div id="patient-flags-list" class="space-y-2.5">
+              <!-- Flags rendered here -->
+              <div class="text-xs text-slate-500 py-3 text-center">No open follow-up flags.</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW 3: CARE COORDINATOR DASHBOARD -->
+    <!-- ============================================== -->
+    <div id="coordinator-view" class="space-y-6 hidden">
+
+      <!-- Header Banner -->
+      <div class="glass-panel p-6 rounded-2xl relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <div class="p-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400">
+                <i data-lucide="stethoscope" class="w-5 h-5"></i>
+              </div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Care Coordinator Triage Dashboard</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Multi-patient chronic care surveillance, overdue follow-up queues, and rule-backed intervention triage.</p>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <button onclick="refreshCoordinatorData()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center space-x-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Refresh Triage Queue</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Coordinator Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-6">
+          <div class="glass-card p-3.5 rounded-xl">
+            <span class="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Total Monitored Patients</span>
+            <span id="coord-stat-patients" class="text-xl font-bold text-white block mt-1 font-mono">2</span>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl">
+            <span class="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Open Follow-up Flags</span>
+            <span id="coord-stat-flags" class="text-xl font-bold text-amber-400 block mt-1 font-mono">1</span>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl">
+            <span class="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Pending Care Tasks</span>
+            <span id="coord-stat-tasks" class="text-xl font-bold text-teal-400 block mt-1 font-mono">2</span>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl">
+            <span class="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Rule Traceability</span>
+            <span class="text-xl font-bold text-emerald-400 block mt-1 font-mono">100% Audited</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Triage Table -->
+      <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+        <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-white">Active Triage & Follow-up Action Items</h3>
+            <p class="text-xs text-slate-400">All open items carry an audited source rule ID and clear rationale</p>
+          </div>
+          <span class="text-xs text-slate-400 font-mono">Sorted by urgency</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-semibold tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-6">Patient</th>
+                <th class="py-3 px-6">Condition</th>
+                <th class="py-3 px-6">Triggered Item & Reason</th>
+                <th class="py-3 px-6">Priority</th>
+                <th class="py-3 px-6">Source Rule ID</th>
+                <th class="py-3 px-6 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="coordinator-table-body" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Dynamically populated -->
+              <tr>
+                <td colspan="6" class="py-6 text-center text-slate-500">Loading coordinator overview...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Monitored Patients Roster -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- Patient A Card -->
+        <div class="glass-panel p-5 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold">PA</div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">Demo Patient A</h4>
+                <p class="text-[11px] text-slate-400">Hypertension • Age 56</p>
+              </div>
+            </div>
+            <button onclick="switchView('patient-001')" class="px-3 py-1 rounded-lg text-xs bg-slate-800 text-slate-300 hover:text-white border border-slate-700">Open Chart</button>
+          </div>
+          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center text-[11px]">
+            <div>
+              <span class="text-slate-500 block">Latest BP</span>
+              <span class="text-white font-mono font-medium">132/82 mmHg</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Open Flags</span>
+              <span class="text-emerald-400 font-medium">0 Clean</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Next Appt</span>
+              <span class="text-slate-300 font-medium">Oct 24</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Patient B Card -->
+        <div class="glass-panel p-5 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold">PB</div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">Demo Patient B</h4>
+                <p class="text-[11px] text-slate-400">Type 2 Diabetes • Age 62</p>
+              </div>
+            </div>
+            <button onclick="switchView('patient-002')" class="px-3 py-1 rounded-lg text-xs bg-brand-600 text-white shadow-sm hover:bg-brand-500">Open Chart</button>
+          </div>
+          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center text-[11px]">
+            <div>
+              <span class="text-slate-500 block">Latest Glucose</span>
+              <span class="text-white font-mono font-medium">115 mg/dL</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Open Flags</span>
+              <span class="text-amber-400 font-medium">1 Overdue Task</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Next Appt</span>
+              <span class="text-slate-300 font-medium">Oct 26</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODAL: LOG NEW HEALTH READING -->
+  <!-- ============================================== -->
+  <div id="reading-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-700/80 animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Record Health Reading</h3>
+            <p id="modal-patient-label" class="text-[11px] text-slate-400">Logging for Demo Patient A</p>
+          </div>
+        </div>
+        <button onclick="closeReadingModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Type Switcher Tabs -->
+      <div class="grid grid-cols-2 gap-2 mt-4 p-1 bg-slate-900 rounded-xl border border-slate-800">
+        <button id="modal-tab-bp" onclick="selectReadingType('blood_pressure')" class="py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition-all">
+          Blood Pressure
+        </button>
+        <button id="modal-tab-glu" onclick="selectReadingType('blood_glucose')" class="py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+          Blood Glucose
+        </button>
+      </div>
+
+      <!-- Error message container -->
+      <div id="modal-error" class="hidden mt-3 p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400">
+      </div>
+
+      <!-- Form Inputs -->
+      <form id="reading-form" onsubmit="submitReading(event)" class="mt-4 space-y-3.5 text-xs">
+        
+        <!-- BP Fields -->
+        <div id="fields-bp" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-300 font-medium mb-1">Systolic (mmHg)</label>
+              <input type="number" id="input-systolic" placeholder="e.g. 130" min="40" max="300" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-brand-500 font-mono">
+            </div>
+            <div>
+              <label class="block text-slate-300 font-medium mb-1">Diastolic (mmHg)</label>
+              <input type="number" id="input-diastolic" placeholder="e.g. 84" min="20" max="200" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-brand-500 font-mono">
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-500">Validated physiological range: 40-300 systolic, 20-200 diastolic.</p>
+        </div>
+
+        <!-- Glucose Fields -->
+        <div id="fields-glucose" class="space-y-3 hidden">
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Glucose Level (mg/dL)</label>
+            <input type="number" id="input-glucose" placeholder="e.g. 140" min="10" max="1000" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-brand-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Measurement Context</label>
+            <select id="input-glucose-context" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-brand-500">
+              <option value="fasting">Fasting (Morning before food)</option>
+              <option value="before_meal">Before Meal</option>
+              <option value="after_meal">After Meal (Post-prandial)</option>
+              <option value="bedtime">Bedtime</option>
+              <option value="unspecified">Unspecified Context</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Recorded At Timestamp -->
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Recorded Date & Time</label>
+          <input type="datetime-local" id="input-timestamp" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-brand-500 font-mono text-[11px]">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeReadingModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium">Cancel</button>
+          <button type="submit" id="btn-submit-reading" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold shadow-md shadow-brand-500/20 flex items-center space-x-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Save & Evaluate</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT -->
+  <script>
+    const API_BASE = "/api";
+    let currentPatientId = "patient-001";
+    let currentView = "patient-001"; // 'patient-001', 'patient-002', 'coordinator'
+    let selectedReadingType = "blood_pressure";
+    let vitalsChartInstance = null;
+
+    // Initialize application on load
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      setDefaultTimestamp();
+      loadPatientData(currentPatientId);
+    });
+
+    function setDefaultTimestamp() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById("input-timestamp").value = now.toISOString().slice(0, 16);
+    }
+
+    // Switch between views
+    function switchView(view) {
+      currentView = view;
+      const btnA = document.getElementById("btn-patient-a");
+      const btnB = document.getElementById("btn-patient-b");
+      const btnCoord = document.getElementById("btn-coordinator");
+      const patientView = document.getElementById("patient-view");
+      const coordView = document.getElementById("coordinator-view");
+
+      // Reset button styles
+      [btnA, btnB, btnCoord].forEach(btn => {
+        btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center space-x-1.5";
+      });
+
+      if (view === "patient-001") {
+        currentPatientId = "patient-001";
+        btnA.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm";
+        patientView.classList.remove("hidden");
+        coordView.classList.add("hidden");
+        loadPatientData("patient-001");
+      } else if (view === "patient-002") {
+        currentPatientId = "patient-002";
+        btnB.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-brand-600 text-white shadow-sm";
+        patientView.classList.remove("hidden");
+        coordView.classList.add("hidden");
+        loadPatientData("patient-002");
+      } else if (view === "coordinator") {
+        btnCoord.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 bg-amber-600 text-white shadow-sm";
+        patientView.classList.add("hidden");
+        coordView.classList.remove("hidden");
+        loadCoordinatorData();
+      }
+      lucide.createIcons();
+    }
+
+    // Load Patient Data
+    async function loadPatientData(patientId) {
+      try {
+        const [patientRes, readingsRes, tasksRes, planRes] = await Promise.all([
+          fetch(`${API_BASE}/patients/${patientId}`).then(r => r.json()),
+          fetch(`${API_BASE}/patients/${patientId}/readings`).then(r => r.json()),
+          fetch(`${API_BASE}/patients/${patientId}/tasks`).then(r => r.json()),
+          fetch(`${API_BASE}/patients/${patientId}/care-plan`).then(r => r.json())
+        ]);
+
+        // 1. Update Profile Header
+        document.getElementById("patient-name").innerText = patientRes.display_name;
+        document.getElementById("patient-age").innerText = patientRes.age;
+        document.getElementById("patient-avatar").innerText = patientId === "patient-001" ? "PA" : "PB";
+        
+        const isHypertension = patientRes.conditions.includes("hypertension");
+        document.getElementById("patient-condition-badge").innerText = isHypertension ? "Hypertension Care Plan" : "Type 2 Diabetes Care Plan";
+        document.getElementById("patient-plan-subtitle").innerText = isHypertension 
+          ? "Active Plan: Daily Blood Pressure & Sodium Monitoring" 
+          : "Active Plan: Fasting & Post-Meal Blood Glucose Logging";
+
+        document.getElementById("stat-next-appt").innerText = planRes.next_appointment 
+          ? new Date(planRes.next_appointment).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : "Not Scheduled";
+
+        // 2. Render Tasks
+        renderTasks(tasksRes);
+
+        // 3. Render Latest Measurement & KPIs
+        if (readingsRes.length > 0) {
+          const latest = readingsRes[0];
+          if (latest.type === "blood_pressure") {
+            document.getElementById("kpi-latest-val").innerText = `${latest.systolic_mmhg}/${latest.diastolic_mmhg}`;
+            document.getElementById("kpi-latest-unit").innerText = "mmHg";
+            document.getElementById("kpi-latest-meta").innerText = `Recorded ${latest.recorded_at.slice(0, 10)}`;
+            document.getElementById("chart-title").innerText = "Blood Pressure Longitudinal Trend (mmHg)";
+          } else {
+            document.getElementById("kpi-latest-val").innerText = `${latest.value}`;
+            document.getElementById("kpi-latest-unit").innerText = `mg/dL (${latest.context || 'unspecified'})`;
+            document.getElementById("kpi-latest-meta").innerText = `Recorded ${latest.recorded_at.slice(0, 10)}`;
+            document.getElementById("chart-title").innerText = "Blood Glucose Longitudinal Trend (mg/dL)";
+          }
+        }
+
+        // 4. Render Chart
+        renderChart(readingsRes);
+
+        // 5. Render Flags for this patient
+        loadPatientFlags(patientId);
+
+        // 6. Fetch AI / Deterministic Summary
+        loadSummary(patientId);
+
+      } catch (err) {
+        console.error("Error loading patient data:", err);
+      }
+    }
+
+    // Render Care Tasks
+    function renderTasks(tasks) {
+      const container = document.getElementById("tasks-list");
+      container.innerHTML = "";
+
+      const completedCount = tasks.filter(t => t.status === "completed").length;
+      document.getElementById("stat-tasks-summary").innerText = `${completedCount} of ${tasks.length} Done`;
+      document.getElementById("kpi-task-rate").innerText = tasks.length > 0 ? `${Math.round((completedCount/tasks.length)*100)}%` : "N/A";
+
+      if (tasks.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">No care tasks scheduled for today.</div>';
+        return;
+      }
+
+      tasks.forEach(task => {
+        const isCompleted = task.status === "completed";
+        const isPending = task.status === "pending";
+
+        const div = document.createElement("div");
+        div.className = `p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+          isCompleted 
+            ? "bg-slate-900/40 border-slate-800 text-slate-400" 
+            : "bg-slate-800/60 border-slate-700/80 hover:border-brand-500 text-white"
+        }`;
+        
+        div.onclick = () => toggleTask(task.id, isCompleted ? "pending" : "completed");
+
+        div.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 rounded-lg flex items-center justify-center border ${
+              isCompleted ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : "border-slate-600 bg-slate-900"
+            }">
+              ${isCompleted ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+            </div>
+            <div>
+              <p class="text-xs font-medium ${isCompleted ? 'line-through text-slate-500' : 'text-slate-200'}">${task.title}</p>
+              <p class="text-[10px] text-slate-500">Due: ${task.due_at.slice(11, 16)} • ${task.created_by.replace('_', ' ')}</p>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 text-[9px] rounded-full uppercase font-bold tracking-wider ${
+            isCompleted ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+          }">
+            ${task.status}
+          </span>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    // Toggle Task Status
+    async function toggleTask(taskId, newStatus) {
+      try {
+        await fetch(`${API_BASE}/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus })
+        });
+        loadPatientData(currentPatientId);
+      } catch (err) {
+        console.error("Error toggling task:", err);
+      }
+    }
+
+    // Load Patient Flags
+    async function loadPatientFlags(patientId) {
+      try {
+        const flags = await fetch(`${API_BASE}/followups?patient_id=${patientId}`).then(r => r.json());
+        const container = document.getElementById("patient-flags-list");
+        container.innerHTML = "";
+
+        const countEl = document.getElementById("kpi-flags-count");
+        const statusEl = document.getElementById("kpi-flags-status");
+        const indicatorEl = document.getElementById("patient-flag-indicator");
+
+        countEl.innerText = flags.length;
+        indicatorEl.innerText = `${flags.length} Active`;
+
+        if (flags.length > 0) {
+          countEl.className = "text-2xl font-bold text-amber-400 font-mono";
+          statusEl.innerText = `${flags.length} item requires coordinator follow-up`;
+          indicatorEl.className = "px-2 py-0.5 text-[10px] rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+
+          flags.forEach(flag => {
+            const flagCard = document.createElement("div");
+            flagCard.className = "p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-1.5";
+            flagCard.innerHTML = `
+              <div class="flex items-center justify-between">
+                <span class="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[9px] font-bold uppercase">${flag.priority}</span>
+                <span class="text-[10px] font-mono text-slate-400">${flag.source_rule_id}</span>
+              </div>
+              <p class="text-xs font-semibold text-white">${flag.reason}</p>
+              <p class="text-[11px] text-amber-300/80">${flag.recommended_action}</p>
+            `;
+            container.appendChild(flagCard);
+          });
+        } else {
+          countEl.className = "text-2xl font-bold text-emerald-400 font-mono";
+          statusEl.innerText = "All follow-up items up to date";
+          indicatorEl.className = "px-2 py-0.5 text-[10px] rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          container.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">No open follow-up flags.</div>';
+        }
+      } catch (err) {
+        console.error("Error loading patient flags:", err);
+      }
+    }
+
+    // Render Chart using Chart.js
+    function renderChart(readings) {
+      const ctx = document.getElementById("vitalsChart").getContext("2d");
+      if (vitalsChartInstance) {
+        vitalsChartInstance.destroy();
+      }
+
+      // Sort chronological
+      const sorted = [...readings].reverse();
+      const labels = sorted.map(r => r.recorded_at.slice(5, 10));
+
+      const isBP = sorted.length > 0 && sorted[0].type === "blood_pressure";
+
+      let datasets = [];
+      if (isBP) {
+        datasets = [
+          {
+            label: "Systolic (mmHg)",
+            data: sorted.map(r => r.systolic_mmhg),
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "#10b981"
+          },
+          {
+            label: "Diastolic (mmHg)",
+            data: sorted.map(r => r.diastolic_mmhg),
+            borderColor: "#14b8a6",
+            backgroundColor: "transparent",
+            borderDash: [4, 4],
+            tension: 0.3,
+            pointBackgroundColor: "#14b8a6"
+          }
+        ];
+      } else {
+        datasets = [
+          {
+            label: "Blood Glucose (mg/dL)",
+            data: sorted.map(r => r.value),
+            borderColor: "#f59e0b",
+            backgroundColor: "rgba(245, 158, 11, 0.1)",
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "#f59e0b"
+          }
+        ];
+      }
+
+      vitalsChartInstance = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#1e293b",
+              titleColor: "#f8fafc",
+              bodyColor: "#94a3b8",
+              borderColor: "#334155",
+              borderWidth: 1,
+              padding: 10,
+              displayColors: true
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: "rgba(255, 255, 255, 0.05)" },
+              ticks: { color: "#64748b", font: { size: 10 } }
+            },
+            y: {
+              grid: { color: "rgba(255, 255, 255, 0.05)" },
+              ticks: { color: "#64748b", font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Load AI / Deterministic Summary
+    async function loadSummary(patientId) {
+      try {
+        const res = await fetch(`${API_BASE}/summaries`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patient_id: patientId })
+        }).then(r => r.json());
+
+        document.getElementById("summary-content").innerText = res.summary;
+        
+        const badge = document.getElementById("summary-badge");
+        if (res.is_ai_generated) {
+          badge.innerText = "Gemini LLM Summary";
+          badge.className = "px-2 py-0.5 text-[10px] rounded-full font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20";
+        } else {
+          badge.innerText = "Deterministic Fallback Engine";
+          badge.className = "px-2 py-0.5 text-[10px] rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        }
+
+        const tagsContainer = document.getElementById("summary-facts-tags");
+        tagsContainer.innerHTML = "";
+        res.used_facts.forEach(fact => {
+          const span = document.createElement("span");
+          span.className = "px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] border border-slate-700/60";
+          span.innerText = fact;
+          tagsContainer.appendChild(span);
+        });
+
+      } catch (err) {
+        console.error("Error loading summary:", err);
+      }
+    }
+
+    function refreshSummary() {
+      loadSummary(currentPatientId);
+    }
+
+    // Load Coordinator Data
+    async function loadCoordinatorData() {
+      try {
+        const res = await fetch(`${API_BASE}/coordinator/overview`).then(r => r.json());
+        const followups = await fetch(`${API_BASE}/followups`).then(r => r.json());
+
+        document.getElementById("coord-stat-patients").innerText = res.total_patients;
+        document.getElementById("coord-stat-flags").innerText = res.total_open_flags;
+        document.getElementById("coord-stat-tasks").innerText = res.total_pending_tasks;
+        document.getElementById("nav-flag-count").innerText = res.total_open_flags;
+
+        const tableBody = document.getElementById("coordinator-table-body");
+        tableBody.innerHTML = "";
+
+        if (followups.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">All follow-ups resolved. Triage queue is clear!</td></tr>';
+          return;
+        }
+
+        followups.forEach(flag => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-800/40 transition-colors";
+          tr.innerHTML = `
+            <td class="py-3 px-6 font-medium text-white">${flag.patient_id === 'patient-001' ? 'Demo Patient A' : 'Demo Patient B'}</td>
+            <td class="py-3 px-6 text-slate-400">${flag.patient_id === 'patient-001' ? 'Hypertension' : 'Type 2 Diabetes'}</td>
+            <td class="py-3 px-6">
+              <span class="font-semibold text-white block">${flag.reason}</span>
+              <span class="text-[11px] text-slate-400">${flag.recommended_action}</span>
+            </td>
+            <td class="py-3 px-6">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                flag.priority === 'urgent' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }">${flag.priority}</span>
+            </td>
+            <td class="py-3 px-6 font-mono text-[11px] text-brand-400">${flag.source_rule_id}</td>
+            <td class="py-3 px-6 text-right">
+              <button onclick="resolveFlag('${flag.id}')" class="px-3 py-1 rounded-lg text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all">
+                Mark Resolved
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error("Error loading coordinator data:", err);
+      }
+    }
+
+    async function resolveFlag(flagId) {
+      try {
+        await fetch(`${API_BASE}/followups/${flagId}/resolve`, { method: "PATCH" });
+        loadCoordinatorData();
+      } catch (err) {
+        console.error("Error resolving flag:", err);
+      }
+    }
+
+    function refreshCoordinatorData() {
+      loadCoordinatorData();
+    }
+
+    // Modal Handling
+    function openReadingModal() {
+      document.getElementById("reading-modal").classList.remove("hidden");
+      document.getElementById("modal-error").classList.add("hidden");
+      document.getElementById("modal-patient-label").innerText = `Logging for ${currentPatientId === 'patient-001' ? 'Demo Patient A (Hypertension)' : 'Demo Patient B (Diabetes)'}`;
+      
+      // Select appropriate tab for current patient
+      selectReadingType(currentPatientId === 'patient-001' ? 'blood_pressure' : 'blood_glucose');
+    }
+
+    function closeReadingModal() {
+      document.getElementById("reading-modal").classList.add("hidden");
+    }
+
+    function selectReadingType(type) {
+      selectedReadingType = type;
+      const tabBP = document.getElementById("modal-tab-bp");
+      const tabGlu = document.getElementById("modal-tab-glu");
+      const fieldsBP = document.getElementById("fields-bp");
+      const fieldsGlu = document.getElementById("fields-glucose");
+
+      if (type === "blood_pressure") {
+        tabBP.className = "py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition-all";
+        tabGlu.className = "py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+        fieldsBP.classList.remove("hidden");
+        fieldsGlu.classList.add("hidden");
+      } else {
+        tabGlu.className = "py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition-all";
+        tabBP.className = "py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+        fieldsGlu.classList.remove("hidden");
+        fieldsBP.classList.add("hidden");
+      }
+    }
+
+    async function submitReading(e) {
+      e.preventDefault();
+      const errorEl = document.getElementById("modal-error");
+      errorEl.classList.add("hidden");
+
+      const ts = new Date(document.getElementById("input-timestamp").value).toISOString();
+
+      let payload = {
+        patient_id: currentPatientId,
+        type: selectedReadingType,
+        recorded_at: ts
+      };
+
+      if (selectedReadingType === "blood_pressure") {
+        const sys = parseFloat(document.getElementById("input-systolic").value);
+        const dia = parseFloat(document.getElementById("input-diastolic").value);
+        if (isNaN(sys) || isNaN(dia)) {
+          errorEl.innerText = "Please enter valid numbers for systolic and diastolic pressure.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+        if (sys <= dia) {
+          errorEl.innerText = "Systolic pressure must be strictly greater than diastolic pressure.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+        payload.systolic_mmhg = sys;
+        payload.diastolic_mmhg = dia;
+        payload.unit = "mmHg";
+      } else {
+        const val = parseFloat(document.getElementById("input-glucose").value);
+        if (isNaN(val)) {
+          errorEl.innerText = "Please enter a valid glucose measurement value.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+        payload.value = val;
+        payload.unit = "mg/dL";
+        payload.context = document.getElementById("input-glucose-context").value;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/patients/${currentPatientId}/readings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          errorEl.innerText = errData.detail || "Validation error occurred.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+
+        closeReadingModal();
+        loadPatientData(currentPatientId);
+
+      } catch (err) {
+        errorEl.innerText = "Network error connecting to API server.";
+        errorEl.classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>

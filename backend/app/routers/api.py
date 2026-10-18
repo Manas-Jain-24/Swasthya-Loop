@@ -1,0 +1,187 @@
+import uuid
+from datetime import datetime, timezone
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..models import Patient, CarePlan, Reading, CareTask, FollowupFlag
+from ..schemas import (
+    PatientResponse,
+    CarePlanResponse,
+    ReadingCreate,
+    ReadingResponse,
+    CareTaskUpdate,
+    CareTaskResponse,
+    FollowupFlagResponse,
+    CoordinatorOverviewResponse,
+    CoordinatorOverviewItem,
+    SummaryRequest,
+    SummaryResponse,
+)
+from ..services.rules import evaluate_patient_tasks_and_rules
+from ..services.summaries import generate_patient_summary
+
+router = APIRouter(prefix="/api", tags=["SwasthyaLoop Core API"])
+
+@router.get("/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "SwasthyaLoop Clinical Follow-up Engine",
+        "version": "1.0.0-hackathon-prototype",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+@router.get("/patients", response_model=List[PatientResponse])
+def list_patients(db: Session = Depends(get_db)):
+    patients = db.query(Patient).all()
+    # Trigger task & rule evaluation on patient list access
+    for p in patients:
+        evaluate_patient_tasks_and_rules(db, p.id)
+    return patients
+
+@router.get("/patients/{patient_id}", response_model=PatientResponse)
+def get_patient(patient_id: str, db: Session = Depends(get_db)):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found.")
+    evaluate_patient_tasks_and_rules(db, patient_id)
+    return patient
+
+@router.get("/patients/{patient_id}/care-plan", response_model=CarePlanResponse)
+def get_care_plan(patient_id: str, db: Session = Depends(get_db)):
+    plan = db.query(CarePlan).filter(CarePlan.patient_id == patient_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Care plan not found for patient.")
+    return plan
+
+@router.get("/patients/{patient_id}/readings", response_model=List[ReadingResponse])
+def get_readings(patient_id: str, db: Session = Depends(get_db)):
+    readings = db.query(Reading).filter(Reading.patient_id == patient_id).order_by(Reading.recorded_at.desc()).all()
+    return readings
+
+@router.post("/patients/{patient_id}/readings", response_model=ReadingResponse)
+def create_reading(patient_id: str, reading_in: ReadingCreate, db: Session = Depends(get_db)):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found.")
+
+    new_reading = Reading(
+        id=f"reading-{uuid.uuid4().hex[:8]}",
+        patient_id=patient_id,
+        type=reading_in.type,
+        recorded_at=reading_in.recorded_at,
+        systolic_mmhg=reading_in.systolic_mmhg,
+        diastolic_mmhg=reading_in.diastolic_mmhg,
+        value=reading_in.value,
+        unit=reading_in.unit,
+        context=reading_in.context,
+        source=reading_in.source,
+        is_demo_data=True
+    )
+    db.add(new_reading)
+    db.commit()
+    db.refresh(new_reading)
+
+    # Re-evaluate rules after new reading
+    evaluate_patient_tasks_and_rules(db, patient_id)
+
+    return new_reading
+
+@router.get("/patients/{patient_id}/tasks", response_model=List[CareTaskResponse])
+def list_tasks(patient_id: str, db: Session = Depends(get_db)):
+    tasks = db.query(CareTask).filter(CareTask.patient_id == patient_id).order_by(CareTask.due_at.asc()).all()
+    return tasks
+
+@router.patch("/tasks/{task_id}", response_model=CareTaskResponse)
+def update_task_status(task_id: str, task_update: CareTaskUpdate, db: Session = Depends(get_db)):
+    task = db.query(CareTask).filter(CareTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found.")
+
+    task.status = task_update.status
+    if task_update.status == "completed":
+        task.completed_at = datetime.now(timezone.utc).isoformat()
+    else:
+        task.completed_at = None
+
+    db.commit()
+    db.refresh(task)
+
+    # Re-evaluate rules (resolves overdue flags if task completed)
+    evaluate_patient_tasks_and_rules(db, task.patient_id)
+
+    return task
+
+@router.get("/followups", response_model=List[FollowupFlagResponse])
+def list_followups(patient_id: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(FollowupFlag)
+    if patient_id:
+        query = query.filter(FollowupFlag.patient_id == patient_id)
+    if status:
+        query = query.filter(FollowupFlag.status == status)
+    else:
+        # Default to open items
+        query = query.filter(FollowupFlag.status == "open")
+
+    return query.order_by(FollowupFlag.created_at.desc()).all()
+
+@router.patch("/followups/{flag_id}/resolve", response_model=FollowupFlagResponse)
+def resolve_followup(flag_id: str, db: Session = Depends(get_db)):
+    flag = db.query(FollowupFlag).filter(FollowupFlag.id == flag_id).first()
+    if not flag:
+        raise HTTPException(status_code=404, detail="Follow-up flag not found.")
+    flag.status = "resolved"
+    db.commit()
+    db.refresh(flag)
+    return flag
+
+@router.get("/coordinator/overview", response_model=CoordinatorOverviewResponse)
+def get_coordinator_overview(db: Session = Depends(get_db)):
+    patients = db.query(Patient).all()
+    overview_items = []
+    total_open_flags = 0
+    total_pending_tasks = 0
+
+    for p in patients:
+        evaluate_patient_tasks_and_rules(db, p.id)
+        open_flags = db.query(FollowupFlag).filter(FollowupFlag.patient_id == p.id, FollowupFlag.status == "open").all()
+        pending_tasks = db.query(CareTask).filter(CareTask.patient_id == p.id, CareTask.status == "pending").all()
+        latest_reading = db.query(Reading).filter(Reading.patient_id == p.id).order_by(Reading.recorded_at.desc()).first()
+        care_plan = db.query(CarePlan).filter(CarePlan.patient_id == p.id).first()
+
+        total_open_flags += len(open_flags)
+        total_pending_tasks += len(pending_tasks)
+
+        highest_flag = None
+        if open_flags:
+            # Sort by priority: urgent > needs_review > routine
+            prio_order = {"urgent": 3, "needs_review": 2, "routine": 1}
+            sorted_flags = sorted(open_flags, key=lambda f: prio_order.get(f.priority, 0), reverse=True)
+            highest_flag = sorted_flags[0]
+
+        overview_items.append(
+            CoordinatorOverviewItem(
+                patient_id=p.id,
+                patient_name=p.display_name,
+                conditions=p.conditions,
+                open_flags_count=len(open_flags),
+                pending_tasks_count=len(pending_tasks),
+                latest_reading=latest_reading,
+                next_appointment=care_plan.next_appointment if care_plan else None,
+                highest_priority_flag=highest_flag
+            )
+        )
+
+    return CoordinatorOverviewResponse(
+        total_patients=len(patients),
+        total_open_flags=total_open_flags,
+        total_pending_tasks=total_pending_tasks,
+        patients=overview_items
+    )
+
+@router.post("/summaries", response_model=SummaryResponse)
+def get_patient_summary_endpoint(req: SummaryRequest, db: Session = Depends(get_db)):
+    summary_data = generate_patient_summary(db, req.patient_id)
+    return SummaryResponse(**summary_data)

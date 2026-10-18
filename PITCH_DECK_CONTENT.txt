@@ -1,0 +1,134 @@
+================================================================================
+SWASTHYALOOP — 6-SLIDE HACKATHON PITCH DECK CONTENT
+Submission Deadline: 8:00 PM Today | Form Opens: 6:00 PM Today
+Template Reference: https://docs.google.com/presentation/d/1hDrQyV0eGBHZ2C-dsTN3_s_o9GzUsYAn/edit
+================================================================================
+
+--------------------------------------------------------------------------------
+SLIDE 1: TITLE & TEAM
+--------------------------------------------------------------------------------
+TITLE:
+SwasthyaLoop: AI-Assisted Closed-Loop Chronic-Care Follow-Up Platform
+
+SUBTITLE:
+Bridging the Care Gap Between Clinic Visits with Safe, Traceable Rules & Plain-Language AI
+
+TRACK:
+Digital Health and Public Health / AI for Operational Efficiency
+
+TEAM DETAILS:
+• Team Name: [Insert Your Team Name]
+• Team Lead: [Insert Name & Email]
+• Team Members: [Insert Member Names]
+• Institution: IIIT Sri City (or your college name)
+
+--------------------------------------------------------------------------------
+SLIDE 2: PROBLEM STATEMENT & VALIDATION
+--------------------------------------------------------------------------------
+WHICH HEALTHCARE PROBLEM ARE WE SOLVING?
+The breakdown in chronic disease follow-up for patients managing hypertension and type 2 diabetes between quarterly clinic visits.
+
+WHO EXPERIENCES THIS & HOW SERIOUS IS IT?
+• Chronic patients are sent home with care plans but lack guidance on daily numbers, leading to missed readings and non-adherence.
+• Hospital care coordinators are buried under disconnected records with no way to prioritize which patients need urgent outreach.
+• Unmonitored chronic conditions silently escalate into heart attacks, strokes, and kidney failure.
+
+CREDIBLE EVIDENCE & STATISTICS:
+• WHO & CDC: Over 50% of chronic disease patients fail to adhere to home treatment and monitoring routines.
+• Economic Burden: Chronic conditions drive over 75% of total healthcare spending, largely due to preventable emergency hospitalizations.
+• BMJ Quality & Safety: Timely post-discharge follow-up and task verification reduces 30-day hospital readmissions by up to 25%.
+
+LIMITATIONS OF CURRENT SOLUTIONS:
+• Paper Logs & Manual Phone Calls: Impossible for hospital coordinators to scale across hundreds of outpatients.
+• Generic Health Tracking Apps: Siloed from the hospital, complex to use for elderly patients, and lack clinical accountability.
+• Unconstrained "AI Doctor" Chatbots: Hallucinate unvetted medical advice, creating unacceptable legal and clinical liability.
+
+--------------------------------------------------------------------------------
+SLIDE 3: PROPOSED SOLUTION & INNOVATION
+--------------------------------------------------------------------------------
+OUR PROPOSED SOLUTION:
+SwasthyaLoop is a closed-loop platform that connects patients and hospital care coordinators through a safe, auditable Hybrid AI architecture.
+
+KEY FEATURES BY USER:
+• For Patients: Clean, simple dashboard to log blood pressure & glucose with instant validation, track daily care tasks, view trend charts, and read plain-language progress summaries.
+• For Care Coordinators: Real-time triage board flagging patients with overdue tasks or anomalous trends, complete with audited rule IDs and 1-click resolution.
+
+WHAT MAKES IT DIFFERENT & INNOVATIVE?
+1. Hybrid AI Safety: We do not use black-box AI for medical decisions. Follow-up flags are triggered by deterministic, transparent code rules (e.g., rule-missing-reading-v1).
+2. Constrained Plain-Language AI: Generative AI (Google Gemini) is strictly limited to translating approved clinical facts into reassuring, jargon-free English.
+3. Zero Medical Hallucinations: The AI is hard-coded to never diagnose, prescribe, or adjust medication dosages.
+4. Resilient Offline Fallback: The platform automatically falls back to deterministic templates if offline, guaranteeing 100% operational uptime.
+
+TECHNOLOGY STACK:
+• Frontend: React, TypeScript, Vite, Tailwind CSS, Chart.js, Lucide Icons.
+• Backend: Python 3.13, FastAPI (asynchronous REST API), Pydantic v2 (physiological bounds checking).
+• Database: SQLite with SQLAlchemy ORM.
+• AI Model: Google Gemini 1.5 Flash (via REST API) + Deterministic Rule Engine.
+• Testing: Automated test suite using pytest and HTTPX.
+
+--------------------------------------------------------------------------------
+SLIDE 4: TECHNICAL METHODOLOGY (WORKFLOW)
+--------------------------------------------------------------------------------
+WORKFLOW: INPUT → PROCESSING → OUTPUT
+
+1. INPUT LAYER:
+   • Patient enters vitals (Blood Pressure: Systolic/Diastolic in mmHg; Blood Glucose: mg/dL with context: Fasting/Post-meal).
+   • Patient checks off completed daily care tasks (e.g., sodium check, brisk walk).
+
+2. PROCESSING & VALIDATION LAYER:
+   • Schema & Physiological Boundary Validation: Pydantic rejects impossible values (e.g., Systolic <= Diastolic or readings outside human limits: 40-300 mmHg).
+   • SQLite Database Persistence: Records reading with ISO timestamps and patient ID.
+   • Deterministic Rules Engine: Evaluates task deadlines. If a planned reading is overdue (e.g., Patient B's post-lunch glucose), it triggers a traceable flag with source rule ID: `rule-missing-reading-v1`.
+   • Fact Aggregator & Constrained AI: Collects structured facts (reading counts, latest values, pending tasks, appointment date) and requests Gemini 1.5 Flash to summarize in plain language. If offline, the built-in deterministic fallback generates the summary instantly.
+
+3. OUTPUT LAYER:
+   • Patient Portal: Real-time interactive trend graph, updated task progress, and friendly plain-language summary.
+   • Coordinator Portal: Triage dashboard sorted by urgency, displaying exact reason codes and 1-click "Mark Resolved" action.
+
+--------------------------------------------------------------------------------
+SLIDE 5: PROTOTYPE & PROOF OF CONCEPT
+--------------------------------------------------------------------------------
+WHAT IS ALREADY IMPLEMENTED (WORKING MVP TODAY):
+• Fully functional full-stack web application (FastAPI + React/Tailwind/Chart.js).
+• Complete Patient View for Patient A (Hypertension) and Patient B (Type 2 Diabetes).
+• Live modal form for logging BP and Glucose with instant client & server validation.
+• Automated overdue task detection and traceable flag generation.
+• Fully operational Care Coordinator Triage Dashboard with 1-click resolution.
+• Hybrid AI summary service with automatic deterministic offline fallback.
+• 8/8 Automated tests passing in pytest (validation, error handling, rule triggers, and fallbacks).
+
+WHAT IS PLANNED FOR FUTURE PHASES:
+• Voice-based logging in regional languages (Hindi, Telugu, Tamil).
+• Automated WhatsApp/SMS reminders for elderly patients without smartphones.
+• HL7 / FHIR API integration for direct electronic health record (EHR) sync.
+
+INITIAL TESTING & RELIABILITY EVIDENCE:
+• 100% test pass rate on automated test suite (8 out of 8 tests passed).
+• Offline verification: Confirmed the system runs seamlessly without an external API key.
+
+LIVE DEMO ACCESS:
+• Local Prototype URL: http://127.0.0.1:8000
+• 1-Click Launcher: python run_server.py
+
+--------------------------------------------------------------------------------
+SLIDE 6: IMPACT, SUSTAINABILITY & NEXT STEPS
+--------------------------------------------------------------------------------
+WHO WOULD ADOPT OR PAY FOR THIS?
+• Hospital Outpatient Departments & Multi-Specialty Clinics: To prevent readmissions and improve patient retention.
+• Health Insurance Payers: To lower expensive emergency hospitalizations through proactive chronic management.
+• Government / Public Health Programs: For large-scale rural diabetes and hypertension follow-up tracking.
+
+BUSINESS & FINANCIAL SUSTAINABILITY:
+• B2B SaaS Model: Monthly per-patient subscription paid by hospitals or primary care networks.
+• Value-Based Care Shared Savings: Partnering with insurers to share in cost savings generated by reducing ICU admissions.
+
+POTENTIAL DEPLOYMENT PARTNERS:
+• District & Community Health Centers (CHCs / PHCs).
+• Private hospital outpatient networks (e.g., Apollo, Fortis, Manipal).
+• Digital health initiatives under national public health missions (ABDM / Ayushman Bharat).
+
+NEXT STEPS & ROADMAP:
+• Month 1–2: Conduct an exploratory pilot with an outpatient clinic to gather coordinator usability feedback.
+• Month 3–4: Introduce speech-to-text logging in regional languages for rural accessibility.
+• Month 5–6: Implement FHIR-compliant bidirectional sync with major hospital EHR systems.
+================================================================================

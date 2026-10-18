@@ -1,0 +1,98 @@
+import uuid
+from datetime import datetime, timezone
+from typing import List
+from sqlalchemy.orm import Session
+from ..models import Patient, CareTask, Reading, FollowupFlag, RuleDefinition
+
+def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[FollowupFlag]:
+    """
+    Evaluates deterministic care tasks and rules for a patient.
+    Generates traceable FollowupFlag records and deduplicates them.
+    Resolves flags when tasks are completed.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        return []
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    created_or_active_flags: List[FollowupFlag] = []
+
+    # 1. Evaluate Overdue Care Tasks
+    tasks = db.query(CareTask).filter(CareTask.patient_id == patient_id).all()
+    for task in tasks:
+        # Check if overdue
+        if task.status == "pending" and task.due_at <= now_iso:
+            # Check if open flag already exists
+            existing_flag = db.query(FollowupFlag).filter(
+                FollowupFlag.patient_id == patient_id,
+                FollowupFlag.source_rule_id == "rule-missing-reading-v1",
+                FollowupFlag.status == "open"
+            ).first()
+
+            if not existing_flag:
+                new_flag = FollowupFlag(
+                    id=f"flag-{uuid.uuid4().hex[:8]}",
+                    patient_id=patient_id,
+                    category="missing_task",
+                    priority="routine",
+                    reason_code="READING_TASK_OVERDUE",
+                    reason=f"Scheduled task '{task.title}' was due by {task.due_at} and has not yet been completed.",
+                    recommended_action="Follow up via routine check-in to confirm if the patient needs assistance recording this reading.",
+                    source_rule_id="rule-missing-reading-v1",
+                    status="open",
+                    created_at=now_iso,
+                    is_demo_data=True
+                )
+                db.add(new_flag)
+                db.commit()
+                db.refresh(new_flag)
+                created_or_active_flags.append(new_flag)
+            else:
+                created_or_active_flags.append(existing_flag)
+
+        elif task.status == "completed":
+            # If a task was completed, automatically resolve any related open overdue flag
+            open_flags = db.query(FollowupFlag).filter(
+                FollowupFlag.patient_id == patient_id,
+                FollowupFlag.source_rule_id == "rule-missing-reading-v1",
+                FollowupFlag.status == "open"
+            ).all()
+            for flag in open_flags:
+                flag.status = "resolved"
+            db.commit()
+
+    # 2. Evaluate Configured Measurement Rules (Synthetic rule triggers)
+    enabled_rules = db.query(RuleDefinition).filter(RuleDefinition.enabled == True).all()
+    recent_readings = db.query(Reading).filter(Reading.patient_id == patient_id).order_by(Reading.recorded_at.desc()).all()
+
+    for rule in enabled_rules:
+        if rule.measurement_type == "blood_pressure":
+            bp_readings = [r for r in recent_readings if r.type == "blood_pressure"]
+            if bp_readings:
+                latest = bp_readings[0]
+                # Example synthetic test rule condition: systolic > 160
+                if rule.condition == "systolic_gt_160" and latest.systolic_mmhg and latest.systolic_mmhg > 160:
+                    existing = db.query(FollowupFlag).filter(
+                        FollowupFlag.patient_id == patient_id,
+                        FollowupFlag.source_rule_id == rule.rule_id,
+                        FollowupFlag.status == "open"
+                    ).first()
+                    if not existing:
+                        flag = FollowupFlag(
+                            id=f"flag-{uuid.uuid4().hex[:8]}",
+                            patient_id=patient_id,
+                            category=rule.category,
+                            priority=rule.priority,
+                            reason_code="SYSTOLIC_ELEVATED_REVIEW",
+                            reason=f"Recorded systolic reading ({latest.systolic_mmhg} mmHg) matches test rule criteria.",
+                            recommended_action="Verify measurement technique and log repeat reading per approved protocol.",
+                            source_rule_id=rule.rule_id,
+                            status="open",
+                            created_at=now_iso,
+                            is_demo_data=True
+                        )
+                        db.add(flag)
+                        db.commit()
+                        created_or_active_flags.append(flag)
+
+    return created_or_active_flags

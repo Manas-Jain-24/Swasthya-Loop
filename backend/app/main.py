@@ -1,0 +1,48 @@
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
+from .database import engine, Base, SessionLocal
+from .seed.demo_data import seed_database
+from .routers.api import router as api_router
+
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: create tables and seed idempotent demo patients
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
+    yield
+
+app = FastAPI(
+    title="SwasthyaLoop Backend API & Clinical Portal",
+    description="AI-assisted chronic-care follow-up engine with deterministic rules and constrained summaries.",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Enable CORS for cross-origin or local development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include core REST API router first
+app.include_router(api_router)
+
+# Mount static web portal at root so opening http://localhost:8000 loads the full dashboard
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
