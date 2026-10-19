@@ -38,9 +38,9 @@ class Patient(Base):
     def cohort_name(self):
         try:
             from .services.clinical_cohorts import get_patient_cohort_info
-            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Discharge Titration")
+            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Post-Discharge Cardiac Follow-Up")
         except Exception:
-            return "30-Day Discharge Titration"
+            return "30-Day Post-Discharge Cardiac Follow-Up"
 
     @property
     def exit_milestone(self):
@@ -99,9 +99,9 @@ class CarePlan(Base):
     def cohort_name(self):
         try:
             from .services.clinical_cohorts import get_patient_cohort_info
-            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Discharge Titration")
+            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Post-Discharge Cardiac Follow-Up")
         except Exception:
-            return "30-Day Discharge Titration"
+            return "30-Day Post-Discharge Cardiac Follow-Up"
 
     @property
     def exit_milestone(self):

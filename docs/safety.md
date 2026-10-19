@@ -1,20 +1,29 @@
-# Clinical AI Safety & Privacy Policy — SwasthyaLoop
+# Clinical AI Safety & Boundary Policy — SwasthyaLoop
 
-## 1. Zero Medical Hallucination Principle
-SwasthyaLoop does not provide autonomous clinical diagnoses, nor does it recommend changes to patient medications or dosages. All clinical care plans originate from licensed medical practitioners.
+## 1. Focused Pathway Boundary
+SwasthyaLoop is strictly constrained to **30-day post-discharge monitoring for cardiac patients after a new or adjusted BP medication**.
+- **Enroll**: Cardiac-discharge patients with an altered blood pressure regimen.
+- **Monitor**: Verified BP trajectories and reported symptom checkpoints.
+- **Exit**: Documented hemodynamic stability or scheduled clinician review.
+- **Do Not Enroll**: Acute emergency symptoms (referred to local emergency departments), stable patients without medication changes, or patients unable to obtain verified measurements.
 
-## 2. Traceability & Source Rules
-Black-box AI risks patient trust and clinical adoption. Every follow-up flag generated in SwasthyaLoop includes:
-- An explicit **Reason Code** (e.g. `READING_TASK_OVERDUE`).
-- An audited **Source Rule ID** (e.g. `rule-missing-reading-v1`).
-- Recommended outreach protocol.
+## 2. Zero Clinical Hallucination & Non-Prescribing Policy
+SwasthyaLoop enforces absolute restrictions on generative AI:
+- **No Autonomous Diagnosis**: The platform identifies trajectory patterns against deterministic rules; it does not issue medical diagnoses.
+- **No Prescriptions or Titration**: The platform strictly prohibits AI from generating prescriptions, suggesting dose changes, or directing medication titration. All therapeutic modifications remain exclusively with the licensed treating clinician.
+- **No Simulated Measurements**: The system never manufactures fake vitals or lab values. If an OCR scan fails or is unreadable, it returns *"Extraction unavailable — enter or confirm reading manually"*.
 
-Clinical measurement rules remain disabled by default until formally reviewed and ratified by an authoritative clinical panel.
+## 3. The Validation Supervisor
+Every AI synthesis is audited before display:
+- **Source Grounding**: Numerical claims are checked against verified database records.
+- **Rule Verification**: Text is checked for correspondence with deterministic rule IDs (e.g., `BP_TREND_UP_3`).
+- **Forbidden Categories Filter**: Explicitly blocks claims in the categories of diagnosis, prescription, and dosage change.
+- **Status Audit**: Outputs a clear audit status: `VERIFIED`, `BLOCKED`, or `MANUAL REVIEW NEEDED`.
 
-## 3. Privacy & Synthetic Data Isolation
-- This prototype operates entirely on synthetic fictional patients (`patient-001`, `patient-002`).
-- No personal identifiers, phone numbers, or real clinical records are collected, transmitted, or stored.
-- When calling external AI models, only anonymized structured counts and numbers are provided.
-
-## 4. Deterministic Offline Fallback
-Healthcare software must be resilient. SwasthyaLoop continues functioning with 100% feature availability when offline or without cloud LLM keys through its built-in deterministic fact-assembly engine.
+## 4. Telemetry Source Verification
+Clinical triage flags are triggered only by verified data sources:
+- `Device photo, patient-confirmed`
+- `Bluetooth cuff`
+- `Caregiver/ASHA-assisted entry`
+- `Pharmacy/sub-centre entry`
+- `Manual patient entry`

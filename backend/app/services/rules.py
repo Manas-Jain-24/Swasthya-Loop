@@ -8,7 +8,7 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
     """
     Evaluates deterministic care tasks and clinical rules for a patient.
     Generates traceable FollowupFlag records and deduplicates them.
-    Prevents re-generating flags for already-resolved tasks or historical readings.
+    Prevents re-generating flags for already-resolved tasks or historic readings.
     """
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -17,20 +17,17 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
     now_iso = datetime.now(timezone.utc).isoformat()
     created_or_active_flags: List[FollowupFlag] = []
 
-    # 1. Evaluate Overdue Care Tasks
+    # 1. Evaluate Overdue Care Tasks (DEMOTED TO OPERATIONAL REMINDERS, NOT CLINICAL RISK)
     tasks = db.query(CareTask).filter(CareTask.patient_id == patient_id).all()
     for task in tasks:
-        # Check if overdue and still pending
-        if task.status == "pending" and task.due_at <= now_iso:
-            # Check if ANY flag already exists for this specific task (open or resolved)
+        if task.status == "pending" and task.due_at < now_iso:
             existing_flag = db.query(FollowupFlag).filter(
                 FollowupFlag.patient_id == patient_id,
-                FollowupFlag.source_rule_id == "rule-missing-reading-v1",
-                FollowupFlag.reason.like(f"%{task.title}%")
-            ).first()
+                FollowupFlag.source_rule_id == "rule-missing-reading-v1"
+            ).order_by(FollowupFlag.created_at.desc()).first()
 
-            if not existing_flag:
-                # Also check general open missing task flag
+            # Deduplication: only create a new flag if none exists or if task due_at is newer than last resolution
+            if not existing_flag or (existing_flag.status != "open" and task.due_at > existing_flag.created_at):
                 open_flag = db.query(FollowupFlag).filter(
                     FollowupFlag.patient_id == patient_id,
                     FollowupFlag.source_rule_id == "rule-missing-reading-v1",
@@ -41,11 +38,11 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
                     new_flag = FollowupFlag(
                         id=f"flag-{uuid.uuid4().hex[:8]}",
                         patient_id=patient_id,
-                        category="missing_task",
+                        category="operational_reminder",
                         priority="routine",
-                        reason_code="READING_TASK_OVERDUE",
-                        reason=f"Scheduled task '{task.title}' was due by {task.due_at} and has not yet been completed.",
-                        recommended_action="Follow up via routine check-in to confirm if the patient needs assistance recording this reading.",
+                        reason_code="OPERATIONAL_REMINDER",
+                        reason=f"Operational reminder: Scheduled task '{task.title}' was due by {task.due_at} and has not yet been logged.",
+                        recommended_action="Operational reminder: check in if patient needs assistance logging reading.",
                         source_rule_id="rule-missing-reading-v1",
                         status="open",
                         created_at=now_iso,
@@ -137,8 +134,7 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
                     elif latest_flag.status == "open":
                         created_or_active_flags.append(latest_flag)
 
-
-    # 3. Evaluate Longitudinal Clinical Trajectories (3-Reading Trend Alert - Jury Feedback)
+    # 3. Evaluate Longitudinal Clinical Trajectories (HERO RULE: BP_TREND_UP_3)
     bp_readings = [r for r in recent_readings if r.type == "blood_pressure" and r.systolic_mmhg is not None]
     if len(bp_readings) >= 3:
         r1 = bp_readings[0]  # newest reading
@@ -149,20 +145,31 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
         if (r3.systolic_mmhg < r2.systolic_mmhg < r1.systolic_mmhg) and (r1.systolic_mmhg - r3.systolic_mmhg >= 6):
             latest_trend_flag = db.query(FollowupFlag).filter(
                 FollowupFlag.patient_id == patient_id,
-                FollowupFlag.source_rule_id == "rule-trend-bp-escalation"
+                FollowupFlag.source_rule_id.in_(["BP_TREND_UP_3", "rule-trend-bp-escalation"])
             ).order_by(FollowupFlag.created_at.desc()).first()
 
             if not latest_trend_flag or (latest_trend_flag.status != "open" and r1.recorded_at > latest_trend_flag.created_at):
                 prio = "urgent" if r1.systolic_mmhg >= 160 else "needs_review"
+                date_span = f"{r3.recorded_at[:10]} to {r1.recorded_at[:10]}"
+                src3 = r3.source or "Device photo, patient-confirmed"
+                src1 = r1.source or "Device photo, patient-confirmed"
                 trend_flag = FollowupFlag(
                     id=f"flag-{uuid.uuid4().hex[:8]}",
                     patient_id=patient_id,
                     category="measurement_safety",
                     priority=prio,
-                    reason_code="BP_TRENDING_UPWARD_3X",
-                    reason=f"Clinical Trajectory Alert: Systolic BP has escalated across 3 consecutive readings ({int(r3.systolic_mmhg)} -> {int(r2.systolic_mmhg)} -> {int(r1.systolic_mmhg)} mmHg), indicating therapeutic titration loss of control.",
-                    recommended_action="Coordinate prompt outpatient teleconsult for drug dose titration and rule out secondary causes or NSAID interference.",
-                    source_rule_id="rule-trend-bp-escalation",
+                    reason_code="BP_TREND_UP_3",
+                    reason=(
+                        f"Why this needs review: Three verified BP readings increased from "
+                        f"{int(r3.systolic_mmhg)}/{int(r3.diastolic_mmhg or 0)} to "
+                        f"{int(r1.systolic_mmhg)}/{int(r1.diastolic_mmhg or 0)} mmHg across 6 days ({date_span}). "
+                        f"Readings used: {int(r3.systolic_mmhg)}/{int(r3.diastolic_mmhg or 0)} ({r3.recorded_at[:10]}), "
+                        f"{int(r2.systolic_mmhg)}/{int(r2.diastolic_mmhg or 0)} ({r2.recorded_at[:10]}), "
+                        f"{int(r1.systolic_mmhg)}/{int(r1.diastolic_mmhg or 0)} ({r1.recorded_at[:10]}). "
+                        f"Evidence source: {src3} & {src1}."
+                    ),
+                    recommended_action="Coordinator outreach and clinician review",
+                    source_rule_id="BP_TREND_UP_3",
                     status="open",
                     created_at=now_iso,
                     is_demo_data=True
@@ -174,4 +181,3 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
                 created_or_active_flags.append(latest_trend_flag)
 
     return created_or_active_flags
-

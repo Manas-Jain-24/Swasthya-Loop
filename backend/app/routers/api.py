@@ -29,7 +29,7 @@ from ..schemas import (
 from ..services.ai_copilot import ask_clinical_copilot, check_medication_safety, scan_multimodal_telemetry_image
 from ..services.rules import evaluate_patient_tasks_and_rules
 from ..services.summaries import generate_patient_summary
-from ..services.clinical_cohorts import COHORT_REGISTRY, DECLINATION_PROTOCOL, TELEMETRY_MODES_ARCH
+from ..services.clinical_cohorts import COHORT_REGISTRY, DECLINATION_PROTOCOL, TELEMETRY_MODES_ARCH, PATHWAY_BOUNDARY
 
 router = APIRouter(prefix="/api", tags=["SwasthyaLoop Core API"])
 
@@ -41,6 +41,7 @@ def get_clinical_cohorts_meta():
     and 3-tier Indian rural/semi-urban telemetry architecture.
     """
     return {
+        "pathway_boundary": PATHWAY_BOUNDARY,
         "cohorts": COHORT_REGISTRY,
         "declination_protocol": DECLINATION_PROTOCOL,
         "telemetry_architecture": TELEMETRY_MODES_ARCH

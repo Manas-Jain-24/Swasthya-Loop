@@ -1,103 +1,128 @@
-# SwasthyaLoop — Post-Discharge Care Coordination & Clinical Triage Platform
-> **Intelligent, Protocol-Grounded Chronic-Care Follow-Up Engine**  
-> *Deterministic Safety Rules • Traceable Follow-Up Flags • Gemini 3.8 Flash Clinical Synthesis*
+# SwasthyaLoop — 30-Day Post-Discharge Cardiac & BP Medication Monitoring Platform
 
-[![Live 2-Minute Demo](https://img.shields.io/badge/YouTube-2--Minute%20Live%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/YpQU1QlJLt8)
-[![Test Suite](https://img.shields.io/badge/Pytest-8%20Passed%20(100%25)-emerald?style=for-the-badge&logo=pytest)](backend/tests/test_api.py)
-[![Model](https://img.shields.io/badge/AI%20Engine-Gemini%203.8%20Flash-blueviolet?style=for-the-badge&logo=google)](backend/app/services/llm_provider.py)
-[![ABDM](https://img.shields.io/badge/Standards-ABDM%20Sandbox%20Ready-blue?style=for-the-badge)](https://abdm.gov.in/)
+> **Safe, Protocol-Grounded Follow-Up for Post-Discharge Cardiac Patients**  
+> *Deterministic Escalation Rules • Traceable Telemetry • Safe AI Clinician Handoff • FHIR-Ready Prototype*
 
----
-
-## 📺 2-Minute Live Video Demonstration
-Watch the complete end-to-end working demonstration (01:52) showcasing the Clinical Command Center, multi-condition directory, longitudinal vitals curve, Gemini 3.8 Flash synthesis, and deterministic triage resolution:
-
-👉 **[Watch Live Demo on YouTube](https://youtu.be/YpQU1QlJLt8)**
-
-[![SwasthyaLoop Live Video Demo](https://img.youtube.com/vi/YpQU1QlJLt8/maxresdefault.jpg)](https://youtu.be/YpQU1QlJLt8)
+[![Test Suite](https://img.shields.io/badge/Pytest-16%20Passed%20(100%25)-emerald?style=for-the-badge&logo=pytest)](backend/tests/test_api.py)
+[![Architecture](https://img.shields.io/badge/Architecture-FastAPI%20%2B%20SQLite-blue?style=for-the-badge)](backend/app/main.py)
+[![AI Engine](https://img.shields.io/badge/Clinical%20AI-Gemini%203.8%20Flash%20(Constrained)-blueviolet?style=for-the-badge)](backend/app/services/ai_copilot.py)
+[![Standards](https://img.shields.io/badge/Standards-FHIR--Ready%20%2F%20ABDM--Aligned%20Prototype-teal?style=for-the-badge)](docs/architecture.md)
 
 ---
 
-## 🎯 The Problem: The "Discharge Void" in Indian Healthcare
-Every year in India, over **60% of chronic care patients** (Hypertension, Type-2 Diabetes, and Multimorbidities) drop out of structured outpatient follow-ups within 90 days of discharge. 
+## 🎯 Clinical Scope & Pathway Boundary
 
-With India's doctor-to-patient ratio at **1:1,456** (WHO standard is 1:1,000) and tertiary OPD doctors seeing 80–120 patients/day (<2.5 min/consultation), manual follow-up calls are unviable. Asymptomatic blood pressure and glucose spikes go unnoticed until patients reappear in catastrophic crisis (stroke, diabetic ketoacidosis, acute heart failure) — **up to 30% of which are clinically preventable**.
+SwasthyaLoop is purposefully designed for a **narrow, high-risk 30-day transitional window**:
+> **"30-day post-discharge monitoring for cardiac patients after a new or adjusted BP medication."**
+
+It does **not** attempt universal chronic care or unconstrained home surveillance. It does **not** claim prior clinical care failed, does **not** replace physician judgment, and does **not** claim every discharged patient needs digital monitoring.
+
+### Pathway Boundary Matrix
+| Boundary Phase | Criteria & Protocols |
+| :--- | :--- |
+| **Enroll** | Cardiac-discharge patients with a newly initiated or adjusted blood pressure medication, monitored for exactly **30 days**. |
+| **Monitor** | Verified blood pressure trajectories, adherence tracking, and reported symptom checkpoints. |
+| **Exit** | Stable verified hemodynamic trajectory across 30 days, or transition to a scheduled in-person clinician review. |
+| **Do Not Enroll** | Patients with acute emergency symptoms (referred immediately to emergency services), hemodynamically stable patients without treatment changes, or patients unable to obtain supported measurements. |
 
 ---
 
-## 💡 The Solution: SwasthyaLoop
-**SwasthyaLoop** is a protocol-grounded, closed-loop clinical coordination and triage platform that bridges home vitals directly into hospital clinical workflows:
+## ⚡ Hero Clinical Feature: Deterministic BP Escalation Trend (`BP_TREND_UP_3`)
 
-1. **Deterministic Clinical Safety Core (Zero Hallucination):** Triage alerts and crisis escalations (e.g. `RULE-HTN-001`: Stage 2 Crisis for BP >160/100 mmHg) are calculated with 100% deterministic rule logic grounded in ICMR 2023 and AHA/ACC guidelines.
-2. **Generative Trajectory Synthesis (Gemini 3.8 Flash):** Ingests longitudinal home vitals, active alerts, and medication regimens to generate sub-5-second physician-grade summaries and patient-friendly guidance.
-3. **Clinician-in-the-Loop Workflow:** Every alert features clear clinical rationale, recommended protocol actions, and a one-click audit resolution workflow with automated CSV reporting.
-4. **ABDM Compatible Architecture:** Structured around FHIR R4 resources for seamless integration with the Ayushman Bharat Digital Mission.
+Rather than alarming on isolated, noisy single measurements, SwasthyaLoop tracks longitudinal hemodynamic trajectories across multiple verified readings:
+
+- **Escalation Trajectory**: `138/86 mmHg` (Day 6) → `148/90 mmHg` (Day 9) → `162/96 mmHg` (Day 11)
+- **Deterministic Rule**: Rule ID `BP_TREND_UP_3` triggers when systolic pressure increases across three consecutive verified readings with the latest $\ge$ 160 mmHg.
+- **Traceable Clinical Evidence**: Displays exact reading dates, values, and audit-logged evidence sources.
+- **Protocol Action**: *"Coordinator outreach and clinician review"*.
+- **Operational Demotion**: Overdue daily tasks and missed readings are classified as **Operational Reminders** (routine priority), reserving clinical triage capacity for verified physiological risks.
+
+---
+
+## 🛡️ Safe Clinical AI: Clinician Handoff & Validation Supervisor
+
+SwasthyaLoop uses Generative AI (Google Gemini) under strict clinical guardrails. Its primary role is **generating concise clinician handoffs from verified database records**.
+
+### Example Output:
+> *"Day 12 after discharge. Three verified BP readings increased from 138/86 to 162/96 across six days. No emergency symptoms recorded. This meets BP_TREND_UP_3 review criteria. Coordinator outreach and clinician review are recommended."*
+
+### Zero-Tolerance Guardrails:
+- ❌ **No autonomous diagnoses**
+- ❌ **No medication or dose titration recommendations**
+- ❌ **No prescription generation**
+- ❌ **No simulated lab values presented as real data**
+
+### Compact Validation Supervisor Panel:
+Under every AI synthesis, a live **Validation Supervisor** audits the text:
+- **Source Readings Used**: Verified database records (e.g., `138/86`, `148/90`, `162/96 mmHg`).
+- **Rule ID Used**: Verified deterministic rule linkage (`BP_TREND_UP_3`).
+- **Claim Check**: Deterministic regex matching verifies that every numerical claim in the summary directly corresponds to an underlying clinical record.
+- **Blocked Categories**: Scans for and blocks forbidden medical categories (`diagnosis`, `prescription`, `dosage change`, `titration`).
+- **Audit Status**: Clear verification badge (`VERIFIED`, `BLOCKED`, or `MANUAL REVIEW NEEDED`).
+
+---
+
+## 📸 Safe Telemetry Ingestion & OCR Policy
+
+To ensure garbage data does not contaminate clinical triage:
+1. **No Simulated Fallbacks**: If an image scan fails, has low resolution, or the API is unavailable, the OCR endpoint **never fabricates fake BP or glucose values**. It returns:
+   > *"Extraction unavailable — enter or confirm reading manually"*
+2. **Explicit Verification Gate**: Unconfirmed OCR scans cannot create verified clinical records.
+3. **Audited Data Sources**:
+   - `Device photo, patient-confirmed`
+   - `Bluetooth cuff`
+   - `Caregiver/ASHA-assisted entry`
+   - `Pharmacy/sub-centre entry`
+   - `Manual patient entry`
 
 ---
 
 ## 🚀 Quickstart: Running Locally
 
-### 1. Launch with One Command
-From PowerShell in the project directory:
+### 1. Launch FastAPI Backend
 ```powershell
-# Start FastAPI backend (port 8001)
-& ".\.venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+# From the repository root
+& ".venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
-Open your browser at:  
-👉 **[http://localhost:8001](http://localhost:8001)**
 
-### 2. Run Automated Test Suite
-To verify the complete 8-test validation suite:
+Access the application portals:
+- **Landing Gateway**: [http://127.0.0.1:8001](http://127.0.0.1:8001)
+- **Doctor / Coordinator Command Center**: [http://127.0.0.1:8001/doctor](http://127.0.0.1:8001/doctor)
+- **Patient Companion Portal**: [http://127.0.0.1:8001/patient](http://127.0.0.1:8001/patient)
+
+### 2. Execute Automated Test Suite (16/16 Passed)
 ```powershell
-$env:PYTHONPATH="backend"; & ".\.venv\Scripts\python.exe" -m pytest backend/tests -v
+& ".venv\Scripts\python.exe" -m pytest backend/tests -v
 ```
-**Result:** `8 passed in 7.76s (100% test pass rate)`
+All 16 test cases validate deterministic rules, AI guardrails, safe OCR, and clinical cohort metadata.
 
 ---
 
-## 🌐 Core API Endpoints
-- `GET  /api/health` — Service health & uptime check
-- `GET  /api/patients` — List cohort patients with current risk status
-- `GET  /api/patients/{id}` — Patient profile, longitudinal vitals & care plan
-- `POST /api/patients/{id}/readings` — Ingest & range-validate new health reading
-- `POST /api/patients/{id}/gemini-summary` — Real-time Gemini 3.8 Flash clinical synthesis
-- `GET  /api/coordinator/overview` — Care coordinator triage statistics & metrics
-- `GET  /api/followups` — List active triage flags (High / Medium / Low)
-- `PATCH /api/followups/{id}/resolve` — Resolve triage flag with clinical audit note
-- `POST /api/tasks/{id}/complete` — Complete care plan task (resolves overdue alert)
+## ⏱️ 2-Minute Judge Evaluation Demo Flow
+
+1. **Step 1: Pathway Boundary (0:00 - 0:25)**
+   - Open [http://127.0.0.1:8001/doctor](http://127.0.0.1:8001/doctor).
+   - Point out the **Pathway Boundary** card: strictly 30 days post-discharge cardiac follow-up with changed BP medication; explicit exclusion of emergency and stable unadjusted patients.
+2. **Step 2: Hero Patient & Rising BP Trajectory (0:25 - 0:55)**
+   - View demo patient **Rajesh Sharma (Day 12 of 30)** at the top of the coordinator screen.
+   - Highlight the **3-reading escalation trajectory**: `138/86` → `148/90` → `162/96 mmHg` across 6 days.
+   - Point out the priority alert banner: Rule ID `BP_TREND_UP_3`, verified dates, telemetry evidence source, and protocol action *"Coordinator outreach and clinician review"*.
+3. **Step 3: Safe AI Handoff & Validation Supervisor (0:55 - 1:25)**
+   - Inspect the **AI Clinical Handoff**: concise, factual synthesis referencing exact dates and readings without any prescriptions or dosage instructions.
+   - Review the **Validation Supervisor Panel**: shows verified source readings, `BP_TREND_UP_3` rule ID, claim check passed, blocked categories (diagnosis/prescription/titration), and status: `VERIFIED`.
+4. **Step 4: Coordinator Action Buttons (1:25 - 1:45)**
+   - Demonstrate the three actionable clinical controls:
+     - `Request repeat verified reading`
+     - `Document outreach`
+     - `Escalate for clinician review`
+5. **Step 5: Safe OCR Verification (1:45 - 2:00)**
+   - Navigate to [http://127.0.0.1:8001/patient](http://127.0.0.1:8001/patient).
+   - Open OCR camera scan on an unreadable or blank image: observe that the system returns *"Extraction unavailable — enter or confirm reading manually"* without fabricating any measurements.
 
 ---
 
-## 📂 Project Directory Structure
-```text
-swasthya-loop/
-├── backend/
-│   ├── app/
-│   │   ├── database.py       # SQLite engine & session factory
-│   │   ├── models.py         # Patient, CarePlan, Reading, CareTask, FollowupFlag
-│   │   ├── schemas.py        # Pydantic v2 schemas with range validators
-│   │   ├── main.py           # FastAPI server & static UI mount
-│   │   ├── routers/api.py    # REST API endpoints
-│   │   ├── services/
-│   │   │   ├── rules.py      # Deterministic clinical safety rules (ICMR/AHA)
-│   │   │   ├── summaries.py  # Fact aggregator & fallback engine
-│   │   │   └── llm_provider.py # Gemini 3.8 Flash clinical adapter
-│   │   ├── seed/demo_data.py # 5-patient diverse cohort (HTN Crisis, T2D, Dual)
-│   │   └── static/index.html # Clinical dashboard SPA (Tailwind/Chart.js/Lucide)
-│   ├── tests/test_api.py     # Automated pytest test suite (8/8 passed)
-│   ├── swasthya.db           # SQLite database
-│   └── requirements.txt
-├── docs/
-│   ├── architecture.md
-│   ├── safety.md
-│   └── demo-script.md
-└── README.md
-```
+## 📋 Current Prototype Limitations
 
----
-
-## 🏆 Presentation Assets
-- **Live 2-Minute Demo:** [https://youtu.be/YpQU1QlJLt8](https://youtu.be/YpQU1QlJLt8)
-- **GitHub Repository:** [https://github.com/Manas-Jain-24/Swasthya-Loop](https://github.com/Manas-Jain-24/Swasthya-Loop)
-- **Team Name:** M&M
-- **Team Lead:** Manas Jain
+1. **Future Integration**: ABDM milestone integrations (M1/M2/M3) and FHIR R4 server exports are architected as data models and mock endpoints; production deployment requires official ABDM sandbox bridge certification.
+2. **Connectivity Fallback**: Bluetooth cuff telemetry currently uses simulated Web Bluetooth API events in browser prototypes rather than native mobile OS drivers.
+3. **Offline Ingestion**: ASHA-assisted entry currently caches in local browser storage; background sync requires full Service Worker PWA deployment.

@@ -169,7 +169,7 @@ def seed_database(db: Session):
             id="patient-003",
             display_name="Rajesh Sharma",
             age=58,
-            conditions=["hypertension"],
+            conditions=["cardiac_post_discharge", "hypertension"],
             preferred_language="en",
             care_plan_id="plan-003",
             is_demo_data=True
@@ -179,7 +179,7 @@ def seed_database(db: Session):
         care_plan_3 = CarePlan(
             id="plan-003",
             patient_id="patient-003",
-            conditions=["hypertension"],
+            conditions=["cardiac_post_discharge", "hypertension"],
             monitoring=[{"type": "blood_pressure", "unit": "mmHg", "schedule": "daily_twice"}],
             medication_tasks_enabled=True,
             next_appointment="2026-10-22T11:00:00+05:30",
@@ -187,14 +187,19 @@ def seed_database(db: Session):
             plan_source="simulated_demo_plan"
         )
         db.add(care_plan_3)
+    else:
+        patient_3.conditions = ["cardiac_post_discharge", "hypertension"]
 
+    # Ensure hero 3-reading rising BP trajectory (138/86 -> 148/90 -> 162/96)
+    existing_p3_readings = db.query(Reading).filter(Reading.patient_id == "patient-003").all()
+    if not existing_p3_readings or len(existing_p3_readings) < 3 or existing_p3_readings[0].systolic_mmhg != 162.0:
+        db.query(Reading).filter(Reading.patient_id == "patient-003").delete()
         bp_history_3 = [
-            ("2026-10-15T08:30:00+05:30", 152.0, 94.0),
-            ("2026-10-16T08:15:00+05:30", 156.0, 96.0),
-            ("2026-10-17T08:45:00+05:30", 158.0, 98.0),
-            ("2026-10-18T08:20:00+05:30", 168.0, 102.0),
+            ("2026-10-13T08:30:00+05:30", 138.0, 86.0, "Device photo, patient-confirmed"),
+            ("2026-10-16T08:15:00+05:30", 148.0, 90.0, "Caregiver/ASHA-assisted entry"),
+            ("2026-10-18T08:45:00+05:30", 162.0, 96.0, "Device photo, patient-confirmed"),
         ]
-        for idx, (ts, sys, dia) in enumerate(bp_history_3):
+        for idx, (ts, sys, dia, src) in enumerate(bp_history_3):
             db.add(Reading(
                 id=f"reading-bp-3-{idx+1:03d}",
                 patient_id="patient-003",
@@ -203,42 +208,54 @@ def seed_database(db: Session):
                 systolic_mmhg=sys,
                 diastolic_mmhg=dia,
                 unit="mmHg",
-                source="manual_entry",
+                source=src,
                 is_demo_data=True
             ))
 
+    # Hero Priority Trend Flag
+    existing_trend_flag = db.query(FollowupFlag).filter(
+        FollowupFlag.patient_id == "patient-003",
+        FollowupFlag.source_rule_id == "BP_TREND_UP_3"
+    ).first()
+    if not existing_trend_flag:
+        db.query(FollowupFlag).filter(FollowupFlag.patient_id == "patient-003").delete()
+        db.add(FollowupFlag(
+            id="flag-301",
+            patient_id="patient-003",
+            category="measurement_safety",
+            priority="urgent",
+            reason_code="BP_TREND_UP_3",
+            reason="Why this needs review: Three verified BP readings increased from 138/86 to 162/96 across 6 days (2026-10-13 to 2026-10-18). Readings used: 138/86 (2026-10-13), 148/90 (2026-10-16), 162/96 (2026-10-18). Evidence source: Device photo, patient-confirmed & Caregiver/ASHA-assisted entry.",
+            recommended_action="Coordinator outreach and clinician review",
+            source_rule_id="BP_TREND_UP_3",
+            status="open",
+            created_at="2026-10-18T09:00:00+05:30",
+            is_demo_data=True
+        ))
+
+    # Tasks for patient-003
+    t1 = db.query(CareTask).filter(CareTask.id == "task-301").first()
+    if not t1:
         db.add(CareTask(
             id="task-301",
             patient_id="patient-003",
             task_type="reading",
-            title="Log morning resting blood pressure",
+            title="Log morning resting blood pressure (verified cuff / photo)",
             due_at="2026-10-18T09:00:00+05:30",
             status="completed",
-            completed_at="2026-10-18T08:30:00+05:30",
+            completed_at="2026-10-18T08:45:00+05:30",
             created_by="simulated_care_plan"
         ))
+    t2 = db.query(CareTask).filter(CareTask.id == "task-302").first()
+    if not t2:
         db.add(CareTask(
             id="task-302",
             patient_id="patient-003",
             task_type="medication",
-            title="Take Amlodipine 5mg with breakfast",
+            title="Take discharge prescribed Amlodipine 5mg",
             due_at="2026-10-18T09:30:00+05:30",
             status="pending",
             created_by="simulated_care_plan"
-        ))
-
-        db.add(FollowupFlag(
-            id="flag-002",
-            patient_id="patient-003",
-            category="measurement_safety",
-            priority="urgent",
-            reason_code="BP_STAGE_2_ELEVATION",
-            reason="Blood pressure spike: 168/102 mmHg exceeds safety threshold (>160 mmHg systolic).",
-            recommended_action="Coordinate immediate clinical review with treating physician and verify repeat resting reading.",
-            source_rule_id="rule-bp-elevated-v1",
-            status="open",
-            created_at="2026-10-18T08:35:00+05:30",
-            is_demo_data=True
         ))
 
     # 4. Patient 004: Sunita Patel (Type 2 Diabetes - Well-Controlled Clean Cohort)
@@ -442,7 +459,7 @@ def seed_database(db: Session):
             priority="urgent",
             reason_code="GLUCOSE_SEVERE_SPIKE",
             reason="Critical post-prandial blood glucose spike (284 mg/dL exceeds 250 mg/dL safety limit).",
-            recommended_action="Emergency endocrinology review. Assess ketone levels and evaluate insulin dose titration.",
+            recommended_action="Emergency endocrinology review. Assess ketone levels and evaluate treatment regimen.",
             source_rule_id="rule-glucose-crisis-v1",
             status="open",
             created_at="2026-10-18T15:15:00+05:30",
@@ -717,7 +734,7 @@ def seed_database(db: Session):
         ("rule-missing-reading-v1", "missing_task", "all", "task_overdue_and_pending", "routine", "task_overdue", "check_patient_recording_assistance", "Clinical Practice Guideline Routine Task Monitoring v1.0"),
         ("rule-bp-elevated-v1", "measurement_safety", "blood_pressure", "systolic_gt_160", "urgent", "systolic_elevation_review", "repeat_reading_and_guideline_check", "ICMR / AHA 2023 Stage 2 Hypertension Triage Protocol"),
         ("rule-glucose-crisis-v1", "measurement_safety", "blood_glucose", "value_gt_250", "urgent", "glucose_crisis_review", "emergency_endocrinology_eval", "ADA 2024 Glycemic Emergency Triage Protocol"),
-        ("rule-trend-bp-escalation", "measurement_safety", "blood_pressure", "systolic_trending_up_3x", "urgent", "systolic_trend_escalation", "teleconsult_titration_review", "Clinical Guideline Longitudinal Trajectory Triage Protocol v2.0")
+        ("rule-trend-bp-escalation", "measurement_safety", "blood_pressure", "systolic_trending_up_3x", "urgent", "systolic_trend_escalation", "teleconsult_clinician_review", "Clinical Guideline Longitudinal Trajectory Triage Protocol v2.0")
     ]
     for r_id, cat, m_type, cond, prio, m_key, a_key, src in rule_defs:
         if not db.query(RuleDefinition).filter(RuleDefinition.rule_id == r_id).first():

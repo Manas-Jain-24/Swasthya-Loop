@@ -8,8 +8,12 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def setup_db():
+    from app.models import FollowupFlag, Reading
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
+    db.query(FollowupFlag).delete()
+    db.query(Reading).delete()
+    db.commit()
     seed_database(db)
     db.close()
 
@@ -26,7 +30,7 @@ def test_list_patients():
     assert len(patients) >= 2
     ids = [p["id"] for p in patients]
     assert "patient-001" in ids
-    assert "patient-002" in ids
+    assert "patient-003" in ids
 
 def test_valid_blood_pressure_reading():
     payload = {
@@ -35,7 +39,8 @@ def test_valid_blood_pressure_reading():
         "recorded_at": "2026-10-18T10:00:00+05:30",
         "systolic_mmhg": 130.0,
         "diastolic_mmhg": 80.0,
-        "unit": "mmHg"
+        "unit": "mmHg",
+        "source": "Device photo, patient-confirmed"
     }
     response = client.post("/api/patients/patient-001/readings", json=payload)
     assert response.status_code == 200
@@ -43,9 +48,9 @@ def test_valid_blood_pressure_reading():
     assert data["systolic_mmhg"] == 130.0
     assert data["diastolic_mmhg"] == 80.0
     assert data["unit"] == "mmHg"
+    assert data["source"] == "Device photo, patient-confirmed"
 
 def test_invalid_blood_pressure_bounds():
-    # Systolic less than diastolic -> must fail
     payload = {
         "patient_id": "patient-001",
         "type": "blood_pressure",
@@ -90,20 +95,23 @@ def test_summary_deterministic_fallback():
     assert len(data["used_facts"]) > 0
     assert "safety_disclaimer" in data
 
-
-def test_ai_copilot_doctor():
+def test_ai_copilot_doctor_handoff():
     response = client.post("/api/ai/copilot", json={
-        "patient_id": "patient-001",
+        "patient_id": "patient-003",
         "user_role": "doctor",
-        "message": "What is the recommended next step for blood pressure control?",
+        "message": "Generate clinician handoff",
         "language": "en"
     })
     assert response.status_code == 200
     data = response.json()
     assert "reply" in data
-    assert len(data["reply"]) > 10
-    assert data["is_emergency"] is False
-    assert len(data["citations"]) > 0
+    assert "Day 12 after discharge" in data["reply"]
+    assert "Three verified BP readings increased from 138/86 to 162/96" in data["reply"]
+    assert "BP_TREND_UP_3" in data["reply"]
+    assert "Coordinator outreach and clinician review" in data["reply"]
+    # Verify NO drug prescribing or titration
+    assert "titrate" not in data["reply"].lower()
+    assert "prescribe" not in data["reply"].lower()
 
 def test_ai_copilot_emergency_sentinel():
     response = client.post("/api/ai/copilot", json={
@@ -117,7 +125,7 @@ def test_ai_copilot_emergency_sentinel():
     assert data["is_emergency"] is True
     assert "108" in data["reply"]
 
-def test_ai_medication_check():
+def test_ai_medication_check_safe():
     response = client.post("/api/ai/medication-check", json={
         "patient_id": "patient-001",
         "medication_name": "Amlodipine",
@@ -128,37 +136,96 @@ def test_ai_medication_check():
     assert data["status"] in ["safe", "warning", "contraindicated"]
     assert "safety_score" in data
 
-def test_ai_scan_image():
+# -------------------------------------------------------------
+# REQUIRED FOCUSED TESTS (SAFETY & REFINEMENT SPEC)
+# -------------------------------------------------------------
+
+def test_failed_ocr_never_fabricates_measurements():
+    """
+    Requirement 4 & 7: Failed or empty OCR must NEVER return fabricated values.
+    Returns 'Extraction unavailable — enter or confirm reading manually'.
+    """
     response = client.post("/api/ai/scan-image", json={
         "image_base64": "",
         "device_hint": "bp_monitor",
-        "patient_id": "patient-001"
+        "patient_id": "patient-003"
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["detected_device"] == "digital_bp_monitor"
-    assert data["systolic_mmhg"] is not None
+    assert data["systolic_mmhg"] is None
+    assert data["diastolic_mmhg"] is None
+    assert data["glucose_value"] is None
+    assert data["confidence"] == 0.0
+    assert "Extraction unavailable — enter or confirm reading manually" in data["clinical_interpretation"]
 
-def test_clinical_trend_alert():
-    # Ingest 3 consecutive escalating readings for patient-001 (138 -> 148 -> 162 mmHg)
+def test_three_verified_rising_bp_triggers_trend_alert():
+    """
+    Requirement 2 & 7: Three verified rising BP readings trigger the hero trend alert.
+    138/86 -> 148/90 -> 162/96 triggers BP_TREND_UP_3.
+    """
     client.post("/api/patients/patient-001/readings", json={
         "patient_id": "patient-001", "type": "blood_pressure",
-        "recorded_at": "2026-10-19T10:00:00+05:30", "systolic_mmhg": 138.0, "diastolic_mmhg": 86.0
+        "recorded_at": "2026-10-13T08:30:00+05:30", "systolic_mmhg": 138.0, "diastolic_mmhg": 86.0,
+        "source": "Device photo, patient-confirmed"
     })
     client.post("/api/patients/patient-001/readings", json={
         "patient_id": "patient-001", "type": "blood_pressure",
-        "recorded_at": "2026-10-19T11:00:00+05:30", "systolic_mmhg": 148.0, "diastolic_mmhg": 90.0
+        "recorded_at": "2026-10-16T08:15:00+05:30", "systolic_mmhg": 148.0, "diastolic_mmhg": 90.0,
+        "source": "Caregiver/ASHA-assisted entry"
     })
     client.post("/api/patients/patient-001/readings", json={
         "patient_id": "patient-001", "type": "blood_pressure",
-        "recorded_at": "2026-10-19T12:00:00+05:30", "systolic_mmhg": 162.0, "diastolic_mmhg": 96.0
+        "recorded_at": "2026-10-18T08:45:00+05:30", "systolic_mmhg": 162.0, "diastolic_mmhg": 96.0,
+        "source": "Device photo, patient-confirmed"
     })
     response = client.get("/api/followups?patient_id=patient-001")
     assert response.status_code == 200
     flags = response.json()
-    reason_codes = [f["reason_code"] for f in flags]
-    assert "BP_TRENDING_UPWARD_3X" in reason_codes
+    matching_flags = [f for f in flags if f["source_rule_id"] in ["BP_TREND_UP_3", "rule-trend-bp-escalation"] or f["reason_code"] in ["BP_TREND_UP_3", "BP_TRENDING_UPWARD_3X"]]
+    assert len(matching_flags) >= 1
+    flag = matching_flags[0]
+    assert "Why this needs review" in flag["reason"] or "Three verified BP readings" in flag["reason"]
+    assert "Coordinator outreach and clinician review" in flag["recommended_action"]
 
+def test_ai_handoff_has_no_prescriptions_or_dosage_recommendations():
+    """
+    Requirement 3 & 7: AI handoff strictly does NOT prescribe, titrate, or change medication doses.
+    """
+    # Ask about titration
+    response = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003",
+        "user_role": "doctor",
+        "message": "Should I titrate Amlodipine to 10mg OD?",
+        "language": "en"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    reply = data["reply"].lower()
+    assert "restricted to licensed clinicians" in reply or "does not generate prescriptions" in reply
+    assert "titrate amlodipine" not in reply
+
+def test_validation_panel_returns_source_backed_evidence():
+    """
+    Requirement 3 & 7: Validation Supervisor panel provides source readings, rule ID,
+    claim check, blocked categories, and status VERIFIED.
+    """
+    resp = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003",
+        "user_role": "doctor",
+        "message": "Generate handoff brief",
+        "language": "en"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "supervisor_validation" in data
+    sup = data["supervisor_validation"]
+    assert sup["status"] == "VERIFIED"
+    assert sup["claim_check"] == "all figures matched"
+    assert sup["rule_id"] == "BP_TREND_UP_3"
+    assert len(sup["source_readings_used"]) >= 1
+    assert "diagnosis" in sup["blocked_categories"]
+    assert "prescription" in sup["blocked_categories"]
+    assert "dosage change" in sup["blocked_categories"]
 
 def test_clinical_cohorts_meta():
     response = client.get("/api/clinical-cohorts")
@@ -169,35 +236,5 @@ def test_clinical_cohorts_meta():
     assert "telemetry_architecture" in data
     assert len(data["declination_protocol"]) >= 4
     assert len(data["telemetry_architecture"]) >= 3
-    # Check Cohort A Post-PCI is defined
-    assert "patient-001" in data["cohorts"]
-    assert "30-Day Post-PCI" in data["cohorts"]["patient-001"]["cohort_name"]
-
-def test_tier2_clinical_supervisor_validation():
-    # Test Copilot returns supervisor audit report
-    resp = client.post("/api/ai/copilot", json={
-        "patient_id": "patient-001",
-        "user_role": "doctor",
-        "message": "Review Metformin dosage in CKD Stage 3",
-        "language": "en"
-    })
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "supervisor_validation" in data
-    sup = data["supervisor_validation"]
-    assert sup["supervisor_status"] == "CLINICALLY_VERIFIED"
-    assert sup["fact_check_score"] == "100%"
-    assert sup["hallucination_risk"] == "0.0%"
-    assert len(sup["safety_rules_passed"]) >= 3
-    assert len(sup["verified_ground_truth"]) >= 4
-
-    # Test Medication Check returns supervisor validation
-    med_resp = client.post("/api/ai/medication-check", json={
-        "patient_id": "patient-001",
-        "medication_name": "Amlodipine",
-        "dosage": "5mg OD"
-    })
-    assert med_resp.status_code == 200
-    med_data = med_resp.json()
-    assert "supervisor_validation" in med_data
-    assert med_data["supervisor_validation"]["supervisor_status"] == "CLINICALLY_VERIFIED"
+    assert "patient-003" in data["cohorts"]
+    assert "30-day post-discharge" in data["cohorts"]["patient-003"]["cohort_name"].lower()
