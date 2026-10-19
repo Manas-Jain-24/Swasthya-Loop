@@ -716,7 +716,8 @@ def seed_database(db: Session):
     rule_defs = [
         ("rule-missing-reading-v1", "missing_task", "all", "task_overdue_and_pending", "routine", "task_overdue", "check_patient_recording_assistance", "Clinical Practice Guideline Routine Task Monitoring v1.0"),
         ("rule-bp-elevated-v1", "measurement_safety", "blood_pressure", "systolic_gt_160", "urgent", "systolic_elevation_review", "repeat_reading_and_guideline_check", "ICMR / AHA 2023 Stage 2 Hypertension Triage Protocol"),
-        ("rule-glucose-crisis-v1", "measurement_safety", "blood_glucose", "value_gt_250", "urgent", "glucose_crisis_review", "emergency_endocrinology_eval", "ADA 2024 Glycemic Emergency Triage Protocol")
+        ("rule-glucose-crisis-v1", "measurement_safety", "blood_glucose", "value_gt_250", "urgent", "glucose_crisis_review", "emergency_endocrinology_eval", "ADA 2024 Glycemic Emergency Triage Protocol"),
+        ("rule-trend-bp-escalation", "measurement_safety", "blood_pressure", "systolic_trending_up_3x", "urgent", "systolic_trend_escalation", "teleconsult_titration_review", "Clinical Guideline Longitudinal Trajectory Triage Protocol v2.0")
     ]
     for r_id, cat, m_type, cond, prio, m_key, a_key, src in rule_defs:
         if not db.query(RuleDefinition).filter(RuleDefinition.rule_id == r_id).first():

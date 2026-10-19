@@ -138,3 +138,23 @@ def test_ai_scan_image():
     data = response.json()
     assert data["detected_device"] == "digital_bp_monitor"
     assert data["systolic_mmhg"] is not None
+
+def test_clinical_trend_alert():
+    # Ingest 3 consecutive escalating readings for patient-001 (138 -> 148 -> 162 mmHg)
+    client.post("/api/patients/patient-001/readings", json={
+        "patient_id": "patient-001", "type": "blood_pressure",
+        "recorded_at": "2026-10-19T10:00:00+05:30", "systolic_mmhg": 138.0, "diastolic_mmhg": 86.0
+    })
+    client.post("/api/patients/patient-001/readings", json={
+        "patient_id": "patient-001", "type": "blood_pressure",
+        "recorded_at": "2026-10-19T11:00:00+05:30", "systolic_mmhg": 148.0, "diastolic_mmhg": 90.0
+    })
+    client.post("/api/patients/patient-001/readings", json={
+        "patient_id": "patient-001", "type": "blood_pressure",
+        "recorded_at": "2026-10-19T12:00:00+05:30", "systolic_mmhg": 162.0, "diastolic_mmhg": 96.0
+    })
+    response = client.get("/api/followups?patient_id=patient-001")
+    assert response.status_code == 200
+    flags = response.json()
+    reason_codes = [f["reason_code"] for f in flags]
+    assert "BP_TRENDING_UPWARD_3X" in reason_codes

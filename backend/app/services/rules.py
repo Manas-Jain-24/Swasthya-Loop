@@ -137,4 +137,41 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
                     elif latest_flag.status == "open":
                         created_or_active_flags.append(latest_flag)
 
+
+    # 3. Evaluate Longitudinal Clinical Trajectories (3-Reading Trend Alert - Jury Feedback)
+    bp_readings = [r for r in recent_readings if r.type == "blood_pressure" and r.systolic_mmhg is not None]
+    if len(bp_readings) >= 3:
+        r1 = bp_readings[0]  # newest reading
+        r2 = bp_readings[1]  # middle reading
+        r3 = bp_readings[2]  # oldest reading
+
+        # Detect strictly upward trajectory across 3 readings with delta >= 6 mmHg
+        if (r3.systolic_mmhg < r2.systolic_mmhg < r1.systolic_mmhg) and (r1.systolic_mmhg - r3.systolic_mmhg >= 6):
+            latest_trend_flag = db.query(FollowupFlag).filter(
+                FollowupFlag.patient_id == patient_id,
+                FollowupFlag.source_rule_id == "rule-trend-bp-escalation"
+            ).order_by(FollowupFlag.created_at.desc()).first()
+
+            if not latest_trend_flag or (latest_trend_flag.status != "open" and r1.recorded_at > latest_trend_flag.created_at):
+                prio = "urgent" if r1.systolic_mmhg >= 160 else "needs_review"
+                trend_flag = FollowupFlag(
+                    id=f"flag-{uuid.uuid4().hex[:8]}",
+                    patient_id=patient_id,
+                    category="measurement_safety",
+                    priority=prio,
+                    reason_code="BP_TRENDING_UPWARD_3X",
+                    reason=f"Clinical Trajectory Alert: Systolic BP has escalated across 3 consecutive readings ({int(r3.systolic_mmhg)} -> {int(r2.systolic_mmhg)} -> {int(r1.systolic_mmhg)} mmHg), indicating therapeutic titration loss of control.",
+                    recommended_action="Coordinate prompt outpatient teleconsult for drug dose titration and rule out secondary causes or NSAID interference.",
+                    source_rule_id="rule-trend-bp-escalation",
+                    status="open",
+                    created_at=now_iso,
+                    is_demo_data=True
+                )
+                db.add(trend_flag)
+                db.commit()
+                created_or_active_flags.append(trend_flag)
+            elif latest_trend_flag.status == "open":
+                created_or_active_flags.append(latest_trend_flag)
+
     return created_or_active_flags
+
