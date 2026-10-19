@@ -204,6 +204,21 @@ def update_task_status(task_id: str, task_update: CareTaskUpdate, db: Session = 
 
     return task
 
+@router.get("/tasks", response_model=List[CareTaskResponse])
+def list_all_tasks(patient_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(CareTask)
+    if patient_id:
+        query = query.filter(CareTask.patient_id == patient_id)
+    return query.order_by(CareTask.due_at.asc()).all()
+
+@router.get("/readings", response_model=List[ReadingResponse])
+def list_all_readings(patient_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Reading)
+    if patient_id:
+        query = query.filter(Reading.patient_id == patient_id)
+    return query.order_by(Reading.recorded_at.desc()).all()
+
+@router.get("/triage-flags", response_model=List[FollowupFlagResponse])
 @router.get("/followups", response_model=List[FollowupFlagResponse])
 def list_followups(patient_id: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(FollowupFlag)
@@ -217,6 +232,7 @@ def list_followups(patient_id: Optional[str] = None, status: Optional[str] = Non
 
     return query.order_by(FollowupFlag.created_at.desc()).all()
 
+@router.patch("/triage-flags/{flag_id}/resolve", response_model=FollowupFlagResponse)
 @router.patch("/followups/{flag_id}/resolve", response_model=FollowupFlagResponse)
 def resolve_followup(flag_id: str, db: Session = Depends(get_db)):
     flag = db.query(FollowupFlag).filter(FollowupFlag.id == flag_id).first()
