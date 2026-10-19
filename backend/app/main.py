@@ -48,6 +48,17 @@ async def add_no_cache_header(request, call_next):
 # Include core REST API router first
 app.include_router(api_router)
 
+from fastapi.responses import FileResponse
+
+# Explicit portal routes for distinct Doctor and Patient interfaces
+@app.get("/doctor")
+async def get_doctor_portal():
+    return FileResponse(os.path.join(STATIC_DIR, "doctor.html"))
+
+@app.get("/patient")
+async def get_patient_portal():
+    return FileResponse(os.path.join(STATIC_DIR, "patient.html"))
+
 # Mount static web portal at root so opening http://localhost:8000 loads the full dashboard
 if os.path.exists(STATIC_DIR):
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

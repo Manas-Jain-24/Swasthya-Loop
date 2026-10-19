@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Patient, CarePlan, Reading, CareTask, FollowupFlag
 from ..schemas import (
-    PatientResponse,
+    PatientResponse, PatientCreate,
     CarePlanResponse,
     ReadingCreate,
     ReadingResponse,
@@ -33,6 +33,88 @@ def health_check():
         "version": "1.0.0-hackathon-prototype",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+@router.post("/patients", response_model=PatientResponse)
+def create_patient(payload: PatientCreate, db: Session = Depends(get_db)):
+    # Generate sequential patient ID
+    existing_count = db.query(Patient).count()
+    new_id = f"patient-{existing_count + 1:03d}"
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    new_patient = Patient(
+        id=new_id,
+        display_name=payload.display_name.strip(),
+        age=payload.age,
+        preferred_language=payload.preferred_language,
+        care_plan_id=f"plan-{new_id}",
+        is_demo_data=False
+    )
+    new_patient.conditions = payload.conditions
+    db.add(new_patient)
+
+    # Create associated CarePlan
+    monitoring_list = []
+    if "hypertension" in payload.conditions:
+        monitoring_list.append({"type": "blood_pressure", "frequency": "daily", "target": "< 130/80"})
+    if "type_2_diabetes" in payload.conditions:
+        monitoring_list.append({"type": "blood_glucose", "frequency": "twice_daily", "target": "80-130 fasting"})
+
+    care_plan = CarePlan(
+        id=f"plan-{new_id}",
+        patient_id=new_id,
+        medication_tasks_enabled=True,
+        next_appointment="2026-10-30",
+        plan_status="active",
+        plan_source="clinician_portal_onboarding"
+    )
+    care_plan.conditions = payload.conditions
+    care_plan.monitoring = monitoring_list
+    db.add(care_plan)
+
+    # Initial baseline readings if provided
+    if payload.initial_bp_systolic and payload.initial_bp_diastolic:
+        bp_reading = Reading(
+            id=f"reading-{uuid.uuid4().hex[:8]}",
+            patient_id=new_id,
+            type="blood_pressure",
+            recorded_at=now_iso,
+            systolic_mmhg=payload.initial_bp_systolic,
+            diastolic_mmhg=payload.initial_bp_diastolic,
+            unit="mmHg",
+            context="unspecified",
+            source="intake_vitals"
+        )
+        db.add(bp_reading)
+
+    if payload.initial_glucose:
+        glu_reading = Reading(
+            id=f"reading-{uuid.uuid4().hex[:8]}",
+            patient_id=new_id,
+            type="blood_glucose",
+            recorded_at=now_iso,
+            value=payload.initial_glucose,
+            unit="mg/dL",
+            context="fasting",
+            source="intake_vitals"
+        )
+        db.add(glu_reading)
+
+    # Generate initial care task
+    task_title = "Log morning blood pressure reading" if "hypertension" in payload.conditions else "Log fasting blood glucose"
+    task = CareTask(
+        id=f"task-{uuid.uuid4().hex[:6]}",
+        patient_id=new_id,
+        task_type="reading",
+        title=task_title,
+        due_at=now_iso,
+        status="pending",
+        created_by="care_plan_template"
+    )
+    db.add(task)
+
+    db.commit()
+    db.refresh(new_patient)
+    return new_patient
 
 @router.get("/patients", response_model=List[PatientResponse])
 def list_patients(db: Session = Depends(get_db)):

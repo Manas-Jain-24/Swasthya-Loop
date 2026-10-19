@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E">
+  <title>Swasthya Saathi — Your Personal Health Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #f8fafc; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #printable-clinical-slip, #printable-clinical-slip * { visibility: visible !important; }
+      #printable-clinical-slip { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 24px !important; background: white !important; z-index: 99999 !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-teal-100 selection:text-teal-900">
+
+  <!-- ============================================== -->
+  <!-- TOP NAVIGATION HEADER -->
+  <!-- ============================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      
+      <!-- Brand & Companion Name -->
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-sm">
+          <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <h1 class="text-base font-bold text-slate-900 tracking-tight">Swasthya Saathi</h1>
+            <span class="text-xs text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">स्वास्थ्य साथी</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">ABDM Digital Patient Care Companion</p>
+        </div>
+      </div>
+
+      <!-- Right Header Actions: Patient Switcher & Clinician Link -->
+      <div class="flex items-center space-x-2">
+        <select id="patient-picker" onchange="onPatientChange(this.value)" class="bg-slate-50 text-slate-800 text-xs font-semibold border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-teal-500 cursor-pointer">
+          <!-- Populated dynamically -->
+        </select>
+        
+        <a href="/doctor" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+          <i data-lucide="stethoscope" class="w-3.5 h-3.5 text-teal-600"></i>
+          <span class="hidden sm:inline">Clinician View</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ============================================== -->
+  <!-- MAIN CONTENT CONTAINER (MOBILE-FIRST) -->
+  <!-- ============================================== -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6 space-y-6">
+
+    <!-- Patient Welcome Card -->
+    <div class="bg-gradient-to-br from-teal-800 to-teal-950 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
+      <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+        <div>
+          <div class="inline-flex items-center space-x-1.5 bg-white/10 px-2.5 py-1 rounded-full text-xs font-medium text-teal-200 mb-2 border border-white/10">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>ABHA Verified • <span id="welcome-abha">rajesh@sbx</span></span>
+          </div>
+          <h2 id="welcome-name" class="text-2xl font-extrabold tracking-tight">Namaste, Rajesh Sharma ji</h2>
+          <p id="welcome-conditions" class="text-sm text-teal-100 mt-1 font-medium">Care Plan: Essential Hypertension • Daily Surveillance</p>
+        </div>
+
+        <div class="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-white/10 pt-3 sm:pt-0">
+          <span class="text-xs text-teal-200">Next Review</span>
+          <span id="welcome-next-app" class="text-sm font-bold text-white bg-white/20 px-3 py-1 rounded-lg mt-0.5">24-Oct-2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Action Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      
+      <!-- Action 1: Log Vital Reading -->
+      <button onclick="openVitalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-teal-400 hover:shadow-md transition-all text-left flex items-start space-x-4 group cursor-pointer">
+        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+          <i data-lucide="plus-circle" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors">Log My Vitals Today</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Record Blood Pressure or Blood Sugar with 1 tap</p>
+          <span class="inline-flex items-center space-x-1 text-xs font-semibold text-teal-700 mt-2">
+            <span>Enter Reading</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </span>
+        </div>
+      </button>
+
+      <!-- Action 2: Digital OPD Slip -->
+      <button onclick="openSlipModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-teal-400 hover:shadow-md transition-all text-left flex items-start space-x-4 group cursor-pointer">
+        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+          <i data-lucide="file-text" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 group-hover:text-purple-700 transition-colors">My Clinical Prescription Slip</h3>
+          <p class="text-xs text-slate-500 mt-0.5">View medicines, doctor notes & print official PDF</p>
+          <span class="inline-flex items-center space-x-1 text-xs font-semibold text-purple-700 mt-2">
+            <span>View OPD Slip</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </span>
+        </div>
+      </button>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION: TODAY'S CARE TASKS CHECKLIST -->
+    <!-- ============================================== -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg">
+            <i data-lucide="check-square" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Today's Daily Checklist</h3>
+            <p class="text-xs text-slate-500">Your personalized medication & monitoring reminders</p>
+          </div>
+        </div>
+        <span id="tasks-count-pill" class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          2 Pending
+        </span>
+      </div>
+
+      <!-- Tasks List Container -->
+      <div id="patient-tasks-list" class="space-y-2.5">
+        <!-- populated dynamically -->
+        <div class="p-6 text-center text-slate-400 text-xs">Loading today's schedule...</div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION: DOCTOR'S VOICE HEALTH ASSISTANT -->
+    <!-- ============================================== -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <div class="p-1.5 bg-purple-50 text-purple-700 rounded-lg">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Doctor's Personalized Briefing</h3>
+            <p class="text-xs text-slate-500">Validated by your clinical care team & Gemini 3.8 Flash</p>
+          </div>
+        </div>
+
+        <!-- Bilingual Switcher -->
+        <div class="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200 text-xs font-semibold">
+          <button id="lang-btn-en" onclick="setLanguage('en')" class="px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer">English</button>
+          <button id="lang-btn-hi" onclick="setLanguage('hi')" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer">हिन्दी</button>
+        </div>
+      </div>
+
+      <!-- Large 1-Tap Audio Play Button -->
+      <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <button id="btn-audio-play" onclick="toggleAudio()" class="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all cursor-pointer">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+          <span id="audio-play-label">🔊 Listen Audio Briefing (सलाह सुनें)</span>
+        </button>
+
+        <div id="audio-wave" class="hidden flex items-center space-x-1 text-purple-700">
+          <span class="w-1.5 h-4 bg-purple-600 rounded-full animate-bounce"></span>
+          <span class="w-1.5 h-6 bg-purple-600 rounded-full animate-bounce delay-75"></span>
+          <span class="w-1.5 h-3 bg-purple-600 rounded-full animate-bounce delay-150"></span>
+          <span class="text-xs font-semibold ml-1.5">Playing audio summary...</span>
+        </div>
+
+        <span class="text-[11px] text-purple-600 font-medium">Web Speech Audio Engine</span>
+      </div>
+
+      <!-- Plain Language Text Box -->
+      <div id="patient-summary-box" class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-medium">
+        Loading clinical briefing...
+      </div>
+
+      <p class="text-[10px] text-slate-400 italic">
+        * This briefing is for your daily personal guidance. Always follow your prescribing doctor's formal directives.
+      </p>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION: RECENT VITALS HISTORY -->
+    <!-- ============================================== -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="p-1.5 bg-teal-50 text-teal-700 rounded-lg">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">My Recent Readings</h3>
+            <p class="text-xs text-slate-500">Your telemetric logs synced with the clinic</p>
+          </div>
+        </div>
+        <button onclick="openVitalModal()" class="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center space-x-1 cursor-pointer">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Add New</span>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+          <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3">Date</th>
+              <th class="py-2.5 px-3">Measurement</th>
+              <th class="py-2.5 px-3">Value</th>
+              <th class="py-2.5 px-3">Status</th>
+            </tr>
+          </thead>
+          <tbody id="patient-readings-table" class="divide-y divide-slate-100">
+            <!-- populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODAL: LOG MY READING -->
+  <!-- ============================================== -->
+  <div id="vital-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <div class="p-1 bg-teal-50 text-teal-700 rounded-lg"><i data-lucide="plus" class="w-4 h-4"></i></div>
+          <h3 class="text-sm font-bold text-slate-900">Log Health Measurement</h3>
+        </div>
+        <button onclick="closeVitalModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <!-- Type Selector -->
+      <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+        <button id="type-btn-bp" onclick="selectVitalType('blood_pressure')" class="py-2 px-3 rounded-lg border border-teal-600 bg-teal-50 text-teal-800 transition-all cursor-pointer">
+          🩸 Blood Pressure
+        </button>
+        <button id="type-btn-glu" onclick="selectVitalType('blood_glucose')" class="py-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all cursor-pointer">
+          🍬 Blood Glucose
+        </button>
+      </div>
+
+      <!-- BP Inputs -->
+      <div id="bp-inputs-group" class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Systolic (Top)</label>
+            <input type="number" id="input-systolic" placeholder="e.g. 128" min="50" max="250" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            <span class="text-[10px] text-slate-400">mmHg</span>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Diastolic (Bottom)</label>
+            <input type="number" id="input-diastolic" placeholder="e.g. 82" min="30" max="150" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            <span class="text-[10px] text-slate-400">mmHg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Glucose Input -->
+      <div id="glucose-inputs-group" class="space-y-3 hidden">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Glucose Level</label>
+          <input type="number" id="input-glucose" placeholder="e.g. 110" min="20" max="600" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400">mg/dL</span>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Timing Context</label>
+          <select id="input-glucose-context" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            <option value="fasting">Fasting (उपवास)</option>
+            <option value="after_meal">After Meal / Post-Prandial (भोजन के बाद)</option>
+            <option value="before_meal">Before Meal (भोजन से पहले)</option>
+            <option value="bedtime">Bedtime (सोते समय)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="modal-feedback-alert" class="hidden p-3 rounded-lg text-xs font-semibold"></div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+        <button onclick="closeVitalModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer">Cancel</button>
+        <button onclick="submitVitalReading()" class="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold rounded-lg shadow-sm cursor-pointer">Submit Reading</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PRINTABLE CLINICAL OPD SLIP -->
+  <!-- ============================================== -->
+  <div id="patient-slip-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Toolbar -->
+      <div class="flex items-center justify-between p-4 bg-slate-900 text-white border-b border-slate-800 no-print">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="file-badge" class="w-5 h-5 text-teal-400"></i>
+          <div>
+            <h3 class="text-sm font-bold">My Clinical Follow-Up OPD Slip</h3>
+            <p class="text-[10px] text-slate-400">ABDM &amp; Hospital E-Prescription Compliant Format</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="window.print()" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>Print / Save PDF</span>
+          </button>
+          <button onclick="closeSlipModal()" class="text-slate-400 hover:text-white p-1 cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Document -->
+      <div class="overflow-y-auto p-6 bg-slate-50 flex-1">
+        <div id="printable-clinical-slip" class="bg-white p-8 rounded-xl border border-slate-300 shadow-sm space-y-6 text-slate-800 font-sans text-xs">
+          
+          <!-- Hospital Header -->
+          <div class="flex items-start justify-between border-b-2 border-teal-700 pb-4">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-sm">SL</div>
+                <h1 class="text-base font-extrabold text-teal-900 uppercase tracking-tight">AIIMS &amp; ABDM Pilot Network Clinic</h1>
+              </div>
+              <p class="text-[10px] text-slate-500 font-medium">Department of Chronic Disease Care Coordination &amp; Tele-Triage</p>
+              <p class="text-[10px] text-slate-400">National Health ID: <span class="font-mono text-slate-600">ABDM-DEL-9144-2026</span> • Facility Reg: DL-ND-AIIMS-04</p>
+            </div>
+            <div class="text-right space-y-0.5">
+              <span class="inline-block px-2.5 py-0.5 bg-teal-50 border border-teal-200 text-teal-800 font-bold text-[10px] rounded">OPD TELE-FOLLOWUP</span>
+              <p class="text-[11px] text-slate-500 font-medium" id="slip-print-date">Date: 19-Oct-2026 IST</p>
+              <p class="text-[10px] text-slate-400">Generated by: <strong class="text-slate-600">SwasthyaLoop</strong></p>
+            </div>
+          </div>
+
+          <!-- Patient Demographics Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px]">
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold">Patient Name</span>
+              <strong class="text-slate-900" id="slip-name">Rajesh Sharma</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold">UHID / Patient ID</span>
+              <span class="font-mono text-slate-700 font-semibold" id="slip-id">SW-2026-003</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold">Age / Gender</span>
+              <span class="text-slate-700" id="slip-demo">58 Yrs / Adult</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold">ABHA Address</span>
+              <span class="font-mono text-teal-700 text-[10px]" id="slip-abha">rajesh@sbx</span>
+            </div>
+          </div>
+
+          <!-- Protocol -->
+          <div class="p-3 bg-white rounded-lg border border-slate-200">
+            <span class="text-slate-400 block text-[9px] uppercase font-bold mb-1">Primary Diagnosis &amp; Protocol</span>
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              <strong class="text-slate-900 text-xs" id="slip-cond">Stage 2 Essential Hypertension (ICD-10 I10)</strong>
+            </div>
+          </div>
+
+          <!-- Physician Instructions -->
+          <div class="space-y-2 p-3.5 bg-teal-50/50 rounded-lg border border-teal-200">
+            <span class="text-teal-900 block text-[10px] uppercase font-bold flex items-center space-x-1">
+              <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-teal-700"></i>
+              <span>Physician Follow-Up Orders &amp; Medication Titration</span>
+            </span>
+            <div id="slip-orders" class="space-y-1 text-slate-700 text-[11px] leading-relaxed">
+              <!-- populated -->
+            </div>
+          </div>
+
+          <!-- Sign-Off -->
+          <div class="pt-4 border-t border-slate-200 flex items-end justify-between">
+            <div class="font-mono text-[9px] text-slate-400 tracking-widest">
+              |||| | ||||| ||| |||| || ||||| |||| | ||| |||||
+            </div>
+            <div class="text-right">
+              <div class="inline-block border-b border-slate-400 w-36 pb-1 text-center font-serif italic text-slate-600 text-[11px]">
+                Dr. A. Sharma, MD
+              </div>
+              <p class="text-[9px] text-slate-400">Consultant Physician • Reg: MCI-58291</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 opacity-0 pointer-events-none px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg text-white"></div>
+
+  <!-- ============================================== -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ============================================== -->
+  <script>
+    const API = "/api";
+    let patients = [];
+    let currentId = "patient-003";
+    let currentLang = "en";
+    let isSpeaking = false;
+    let selectedVitalType = "blood_pressure";
+
+    const HINDI_SUMMARIES = {
+      "patient-001": "नमस्ते अनन्य जी। डॉ. शर्मा के क्लिनिक द्वारा आपके स्वास्थ्य परीक्षण की समीक्षा की गई है। आपका हालिया रक्तचाप 132/82 दर्ज हुआ है, जो स्थिर और नियंत्रित सीमा में है। कृपया अपनी नियमित सुबह की दवा एम्लोडिपिन 5mg समय पर लेते रहें, भोजन में नमक की मात्रा सीमित रखें और शाम की 20 मिनट की सैर जारी रखें। आपका अगला क्लिनिकल चेक-अप 24 अक्टूबर को निर्धारित है।",
+      "patient-002": "नमस्ते विक्रमादित्य जी। आपके रक्त शर्करा 140 मिलीग्राम प्रति डेसीलीटर की समीक्षा की गई है। आपका दोपहर के भोजन के बाद का परीक्षण लंबित है। कृपया अपना निर्धारित पोस्ट-लंच ग्लूकोज लॉग करें, मेटफॉर्मिन 500mg समय पर लें और कम ग्लाइसेमिक आहार का पालन करें।",
+      "patient-003": "नमस्ते राजेश जी। डॉ. शर्मा के क्लिनिक द्वारा आपके हालिया रक्तचाप 168/102 की समीक्षा की गई है। यह आपातकालीन सुरक्षा सीमा से ऊपर है। तत्काल टेलीकंसल्ट प्रोटोकॉल के अनुसार आपकी शाम की दवा एम्लोडिपिन 10mg निर्धारित की गई है। कृपया इसे रात के भोजन के बाद लें, भोजन में नमक बिल्कुल कम करें और कल सुबह 8 बजे अपना रक्तचाप दोबारा मापें।",
+      "patient-004": "नमस्ते सुनीता जी। आपके उपवास रक्त शर्करा 104 मिलीग्राम का स्तर बहुत अच्छा और पूर्णतः सामान्य सीमा में है। कोई भी आपातकालीन चेतावनी नहीं है। अपनी नियमित दिनचर्या, आहार और दवा जारी रखें।",
+      "patient-005": "नमस्ते अमिताभ जी। आपके रक्तचाप 146/92 और रक्त शर्करा 178 मिलीग्राम की समीक्षा की गई है। आपका सुबह का डुअल पैनल परीक्षण 2 दिनों से छूटा हुआ है। कृपया आज शाम का परीक्षण अवश्य पूरा करें और दोनों दवाएं समय पर लें।",
+      "patient-006": "नमस्ते कविता जी। आपके हालिया पोस्ट-मील रक्त शर्करा 284 मिलीग्राम की समीक्षा की गई है। यह उच्च स्तर पर है और तत्काल डॉक्टर समीक्षा की आवश्यकता है। कृपया अपने इंसुलिन ग्लारजीन की 12 यूनिट खुराक तुरंत लें, पर्याप्त पानी पिएं और मीठे खाद्य पदार्थों से परहेज करें।",
+      "patient-007": "नमस्ते मीरा जी। आपका रक्तचाप 116/74 बहुत ही उत्कृष्ट है और आप पूर्ण सुधार की स्थिति में हैं। आपकी जीवनशैली और नमक नियंत्रण बहुत प्रभावी रहा है। इसे बनाए रखें।",
+      "patient-008": "नमस्ते आरव जी। आपके कार्य तनाव के कारण रक्तचाप 136/86 दर्ज हुआ है जो प्री-हाइपरटेंशन की श्रेणी में है। कृपया कैफीन कम करें, नियमित 7 घंटे की नींद लें और शाम को विश्राम का समय निकालें।",
+      "patient-009": "नमस्ते हरीश जी। आपके रक्तचाप 164/98 और शर्करा 210 दोनों उच्च स्तर पर हैं। यह गंभीर स्थिति है। कृपया अपनी दोनों दवाएं तुरंत लें और आज ही क्लिनिक में टेलीकंसल्ट के लिए उपस्थित हों।",
+      "patient-010": "नमस्ते प्रिया जी। आपका रक्त शर्करा 118 बॉर्डरलाइन प्री-डायबिटीज दर्शाता है। दैनिक 30 मिनट का व्यायाम और आहार में फाइबर की मात्रा बढ़ाना आपके लिए लाभकारी रहेगा।"
+    };
+
+    let englishSummary = "";
+
+    async function init() {
+      try {
+        const res = await fetch(`${API}/patients?_t=${Date.now()}`, { cache: "no-store" });
+        patients = await res.json();
+        
+        // Check URL param ?patient_id=
+        const urlParams = new URLSearchParams(window.location.search);
+        const pParam = urlParams.get('patient_id');
+        if (pParam && patients.some(p => p.id === pParam)) {
+          currentId = pParam;
+        } else if (patients.length > 0) {
+          currentId = patients[0].id;
+        }
+
+        populatePatientPicker();
+        await loadPatientData();
+      } catch (err) {
+        console.error("Init error:", err);
+      }
+    }
+
+    function populatePatientPicker() {
+      const picker = document.getElementById("patient-picker");
+      picker.innerHTML = patients.map(p => 
+        `<option value="${p.id}" ${p.id === currentId ? 'selected' : ''}>👤 ${p.display_name} (${p.conditions.map(c => c.replace(/_/g, ' ')).join(', ')})</option>`
+      ).join('');
+    }
+
+    async function onPatientChange(id) {
+      currentId = id;
+      if (isSpeaking) window.speechSynthesis.cancel();
+      updateAudioBtn(false);
+      await loadPatientData();
+    }
+
+    async function loadPatientData() {
+      const p = patients.find(pt => pt.id === currentId);
+      if (!p) return;
+
+      // Update welcome banner
+      document.getElementById("welcome-name").innerText = `Namaste, ${p.display_name} ji`;
+      document.getElementById("welcome-abha").innerText = `${p.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
+      document.getElementById("welcome-conditions").innerText = `Care Plan: ${p.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ')} • Daily Surveillance`;
+
+      // Fetch Tasks, Readings, Summary, and Care Plan
+      await Promise.all([
+        loadTasks(),
+        loadReadings(),
+        loadSummary(),
+        loadCarePlan()
+      ]);
+      lucide.createIcons();
+    }
+
+    async function loadTasks() {
+      const res = await fetch(`${API}/patients/${currentId}/tasks?_t=${Date.now()}`, { cache: "no-store" });
+      const tasks = await res.json();
+      const container = document.getElementById("patient-tasks-list");
+      const pendingCount = tasks.filter(t => t.status === "pending").length;
+      
+      document.getElementById("tasks-count-pill").innerText = pendingCount === 0 ? "All Done! 🎉" : `${pendingCount} Pending`;
+      document.getElementById("tasks-count-pill").className = pendingCount === 0 
+        ? "text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200"
+        : "text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200";
+
+      if (tasks.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">No pending tasks for today. You are all caught up!</div>';
+        return;
+      }
+
+      container.innerHTML = tasks.map(t => {
+        const isDone = t.status === "completed";
+        return `
+          <div class="p-3.5 rounded-xl border ${isDone ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200 shadow-2xs hover:border-teal-300'} flex items-center justify-between gap-3 transition-all">
+            <div class="flex items-center space-x-3">
+              <button onclick="toggleTask('${t.id}', '${isDone ? 'pending' : 'completed'}')" class="w-6 h-6 rounded-lg border ${isDone ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 hover:border-teal-600'} flex items-center justify-center cursor-pointer transition-all">
+                ${isDone ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+              </button>
+              <div>
+                <p class="text-xs font-bold ${isDone ? 'line-through text-slate-500' : 'text-slate-800'}">${t.title}</p>
+                <span class="text-[10px] text-slate-400 font-mono">Due: ${(t.due_at || '').slice(11, 16) || 'Today'}</span>
+              </div>
+            </div>
+            ${isDone 
+              ? '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Completed</span>'
+              : `<button onclick="toggleTask('${t.id}', 'completed')" class="px-3 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold rounded-lg border border-teal-200 cursor-pointer transition-all">Mark Done ✓</button>`
+            }
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    async function toggleTask(taskId, newStatus) {
+      try {
+        await fetch(`${API}/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+          cache: "no-store"
+        });
+        showToast(newStatus === "completed" ? "✓ Task completed! Great job." : "Task marked as pending.", "success");
+        await loadTasks();
+      } catch (err) {
+        showToast("Error updating task.", "error");
+      }
+    }
+
+    async function loadSummary() {
+      try {
+        const res = await fetch(`${API}/summaries`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patient_id: currentId }),
+          cache: "no-store"
+        });
+        const data = await res.json();
+        englishSummary = data.summary || "Summary generated.";
+        updateSummaryView();
+      } catch (err) {
+        document.getElementById("patient-summary-box").innerText = "Unable to load summary at this time.";
+      }
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.getElementById("lang-btn-en").className = lang === 'en' 
+        ? "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer"
+        : "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+      document.getElementById("lang-btn-hi").className = lang === 'hi' 
+        ? "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer"
+        : "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer font-normal";
+      
+      updateSummaryView();
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        updateAudioBtn(false);
+      }
+      showToast(`Language set to ${lang === 'hi' ? 'हिन्दी (Hindi)' : 'English'}`, "info");
+    }
+
+    function updateSummaryView() {
+      const box = document.getElementById("patient-summary-box");
+      if (currentLang === 'hi') {
+        box.innerText = HINDI_SUMMARIES[currentId] || "नमस्ते। आपके स्वास्थ्य परीक्षण की समीक्षा की गई है। कृपया अपनी निर्धारित दवाएं समय पर लें।";
+      } else {
+        box.innerText = englishSummary || "Loading clinical guidance...";
+      }
+      document.getElementById("audio-play-label").innerText = currentLang === 'hi' ? "🔊 ऑडियो सलाह सुनें" : "🔊 Listen Audio Briefing";
+    }
+
+    function toggleAudio() {
+      if (!('speechSynthesis' in window)) {
+        showToast("Speech synthesis not supported in this browser", "error");
+        return;
+      }
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        updateAudioBtn(false);
+        showToast("Audio stopped", "info");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const text = currentLang === 'hi' 
+        ? (HINDI_SUMMARIES[currentId] || "नमस्ते। आपके स्वास्थ्य परीक्षण की समीक्षा की गई है।")
+        : (englishSummary || "Clinical summary active.");
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = currentLang === 'hi' ? 0.9 : 0.95;
+      utter.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+
+      const voices = window.speechSynthesis.getVoices();
+      if (currentLang === 'hi') {
+        const v = voices.find(vox => vox.lang.startsWith('hi') || vox.name.toLowerCase().includes('hindi'));
+        if (v) utter.voice = v;
+      } else {
+        const v = voices.find(vox => vox.lang.includes('IN') || vox.name.includes('India'));
+        if (v) utter.voice = v;
+      }
+
+      utter.onstart = () => updateAudioBtn(true);
+      utter.onend = () => updateAudioBtn(false);
+      utter.onerror = () => updateAudioBtn(false);
+
+      window.speechSynthesis.speak(utter);
+      showToast(`Playing audio in ${currentLang === 'hi' ? 'Hindi' : 'English'}...`, "info");
+    }
+
+    function updateAudioBtn(speaking) {
+      isSpeaking = speaking;
+      const btn = document.getElementById("btn-audio-play");
+      const wave = document.getElementById("audio-wave");
+      if (speaking) {
+        btn.className = "px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all cursor-pointer animate-pulse";
+        btn.innerHTML = `<i data-lucide="square" class="w-4 h-4 fill-current"></i><span>Stop Voice (रोकें)</span>`;
+        if (wave) wave.classList.remove("hidden");
+      } else {
+        btn.className = "px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all cursor-pointer";
+        btn.innerHTML = `<i data-lucide="volume-2" class="w-4 h-4"></i><span id="audio-play-label">${currentLang === 'hi' ? '🔊 ऑडियो सलाह सुनें' : '🔊 Listen Audio Briefing'}</span>`;
+        if (wave) wave.classList.add("hidden");
+      }
+      lucide.createIcons();
+    }
+
+    async function loadReadings() {
+      const res = await fetch(`${API}/patients/${currentId}/readings?_t=${Date.now()}`, { cache: "no-store" });
+      const list = await res.json();
+      const tbody = document.getElementById("patient-readings-table");
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">No vitals logged yet. Use the button above to log one!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.slice(0, 5).map(r => {
+        const isBp = r.type === "blood_pressure";
+        const val = isBp ? `${r.systolic_mmhg}/${r.diastolic_mmhg} mmHg` : `${r.value} mg/dL`;
+        const isHigh = (isBp && r.systolic_mmhg >= 160) || (!isBp && r.value >= 180);
+        const statusHtml = isHigh 
+          ? '<span class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded font-bold border border-rose-200">Spike Alert</span>'
+          : '<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200">Normal</span>';
+        
+        return `
+          <tr class="hover:bg-slate-50/70">
+            <td class="py-2.5 px-3 font-mono text-slate-500">${(r.recorded_at || '').slice(0, 10)}</td>
+            <td class="py-2.5 px-3 font-medium text-slate-700">${isBp ? 'Blood Pressure' : 'Blood Glucose'}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${val}</td>
+            <td class="py-2.5 px-3">${statusHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadCarePlan() {
+      try {
+        const res = await fetch(`${API}/patients/${currentId}/care-plan?_t=${Date.now()}`, { cache: "no-store" });
+        const plan = await res.json();
+        if (plan && plan.next_appointment) {
+          document.getElementById("welcome-next-app").innerText = plan.next_appointment;
+        }
+      } catch (e) {}
+    }
+
+    // ==============================================
+    // VITAL LOGGING MODAL
+    // ==============================================
+    function openVitalModal() {
+      document.getElementById("vital-modal").classList.remove("hidden");
+      document.getElementById("modal-feedback-alert").classList.add("hidden");
+      lucide.createIcons();
+    }
+
+    function closeVitalModal() {
+      document.getElementById("vital-modal").classList.add("hidden");
+    }
+
+    function selectVitalType(type) {
+      selectedVitalType = type;
+      const bpGroup = document.getElementById("bp-inputs-group");
+      const gluGroup = document.getElementById("glucose-inputs-group");
+      const btnBp = document.getElementById("type-btn-bp");
+      const btnGlu = document.getElementById("type-btn-glu");
+
+      if (type === "blood_pressure") {
+        bpGroup.classList.remove("hidden");
+        gluGroup.classList.add("hidden");
+        btnBp.className = "py-2 px-3 rounded-lg border border-teal-600 bg-teal-50 text-teal-800 font-bold transition-all cursor-pointer";
+        btnGlu.className = "py-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all cursor-pointer font-normal";
+      } else {
+        bpGroup.classList.add("hidden");
+        gluGroup.classList.remove("hidden");
+        btnGlu.className = "py-2 px-3 rounded-lg border border-teal-600 bg-teal-50 text-teal-800 font-bold transition-all cursor-pointer";
+        btnBp.className = "py-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all cursor-pointer font-normal";
+      }
+    }
+
+    async function submitVitalReading() {
+      const now = new Date().toISOString();
+      let payload = {
+        patient_id: currentId,
+        type: selectedVitalType,
+        recorded_at: now,
+        source: "patient_portal"
+      };
+
+      if (selectedVitalType === "blood_pressure") {
+        const sys = parseFloat(document.getElementById("input-systolic").value);
+        const dia = parseFloat(document.getElementById("input-diastolic").value);
+        if (!sys || !dia || sys <= dia) {
+          showFeedbackAlert("Please enter valid Systolic and Diastolic numbers (Systolic must be higher).", "error");
+          return;
+        }
+        payload.systolic_mmhg = sys;
+        payload.diastolic_mmhg = dia;
+        payload.unit = "mmHg";
+      } else {
+        const val = parseFloat(document.getElementById("input-glucose").value);
+        if (!val || val <= 0) {
+          showFeedbackAlert("Please enter a valid glucose measurement.", "error");
+          return;
+        }
+        payload.value = val;
+        payload.unit = "mg/dL";
+        payload.context = document.getElementById("input-glucose-context").value;
+      }
+
+      try {
+        const res = await fetch(`${API}/patients/${currentId}/readings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          cache: "no-store"
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          showFeedbackAlert(err.detail || "Error submitting reading.", "error");
+          return;
+        }
+
+        closeVitalModal();
+        showToast("✓ Vital reading logged successfully!", "success");
+        await loadReadings();
+        await loadTasks();
+        await loadSummary();
+      } catch (err) {
+        showFeedbackAlert("Network connection error.", "error");
+      }
+    }
+
+    function showFeedbackAlert(msg, type) {
+      const el = document.getElementById("modal-feedback-alert");
+      el.innerText = msg;
+      el.className = type === "error" 
+        ? "p-3 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200" 
+        : "p-3 rounded-lg text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200";
+      el.classList.remove("hidden");
+    }
+
+    // ==============================================
+    // OPD SLIP MODAL
+    // ==============================================
+    function openSlipModal() {
+      const p = patients.find(pt => pt.id === currentId);
+      if (!p) return;
+
+      document.getElementById("slip-name").innerText = p.display_name;
+      document.getElementById("slip-id").innerText = `UHID: ${p.id.toUpperCase()}`;
+      document.getElementById("slip-demo").innerText = `${p.age || 58} Yrs / Adult`;
+      document.getElementById("slip-abha").innerText = `${p.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
+      document.getElementById("slip-cond").innerText = p.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ');
+      document.getElementById("slip-print-date").innerText = `Date: ${new Date().toLocaleDateString('en-GB')} IST`;
+
+      const orders = document.getElementById("slip-orders");
+      if (p.id === "patient-003") {
+        orders.innerHTML = `
+          <div>• <strong>Rx Adjustment:</strong> Tab. Amlodipine 10mg OD (Take 1 tablet after dinner with warm water).</div>
+          <div>• <strong>Dietary Restriction:</strong> Strict dietary sodium restriction (&lt; 2.0g/day). Avoid pickles and papad.</div>
+          <div>• <strong>Telemetry Schedule:</strong> Mandatory repeat resting BP reading tomorrow morning at 08:00 AM.</div>
+          <div>• <strong>Next Review:</strong> Scheduled teleconsultation in 72 hours.</div>
+        `;
+      } else if (p.conditions.includes("type_2_diabetes")) {
+        orders.innerHTML = `
+          <div>• <strong>Rx Orders:</strong> Tab. Metformin 500mg BD after breakfast and dinner.</div>
+          <div>• <strong>Dietary Guidance:</strong> Low glycemic index meals; minimum 30 minutes brisk walk daily.</div>
+          <div>• <strong>Telemetry Schedule:</strong> Log fasting glucose tomorrow morning; log post-lunch reading.</div>
+          <div>• <strong>Next Review:</strong> Regular scheduled follow-up on Oct 26, 2026.</div>
+        `;
+      } else {
+        orders.innerHTML = `
+          <div>• <strong>Rx Orders:</strong> Continue regular morning prescribed medication with water.</div>
+          <div>• <strong>Routine Follow-up:</strong> Log daily morning blood pressure reading in SwasthyaLoop portal.</div>
+          <div>• <strong>Next Review:</strong> Scheduled OPD visit on Oct 24, 2026.</div>
+        `;
+      }
+
+      document.getElementById("patient-slip-modal").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function closeSlipModal() {
+      document.getElementById("patient-slip-modal").classList.add("hidden");
+    }
+
+    function showToast(msg, type) {
+      const toast = document.getElementById("toast");
+      toast.innerText = msg;
+      toast.className = `fixed bottom-5 right-5 z-50 transform transition-all duration-300 opacity-100 pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg text-white ${
+        type === "error" ? "bg-rose-600" : "bg-teal-700"
+      }`;
+      setTimeout(() => {
+        toast.className = toast.className.replace("opacity-100 pointer-events-auto", "opacity-0 pointer-events-none");
+      }, 3000);
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

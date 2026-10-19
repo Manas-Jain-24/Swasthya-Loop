@@ -1,6 +1,15 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, model_validator
 
+class PatientCreate(BaseModel):
+    display_name: str
+    age: int
+    conditions: List[str]
+    preferred_language: str = "en"
+    initial_bp_systolic: Optional[float] = None
+    initial_bp_diastolic: Optional[float] = None
+    initial_glucose: Optional[float] = None
+
 class PatientResponse(BaseModel):
     id: str
     display_name: str
