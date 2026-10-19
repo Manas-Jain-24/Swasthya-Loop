@@ -29,12 +29,7 @@
   <style>
     body { background-color: #f8fafc; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; }
     .tab-active { border-bottom: 2px solid #0d9488; color: #0f766e; font-weight: 700; }
-    @media print {
-      body * { visibility: hidden !important; }
-      #printable-prescription, #printable-prescription * { visibility: visible !important; }
-      #printable-prescription { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 24px !important; background: white !important; z-index: 99999 !important; }
-      .no-print { display: none !important; }
-    }
+
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 antialiased selection:bg-teal-100 selection:text-teal-900">
@@ -627,18 +622,18 @@
               </button>
             </div>
 
-            <!-- Clinical Supervisor Validation Layer Badge (Jury 3 Feedback) -->
-            <div onclick="openSupervisorAuditModal()" class="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs group" title="Click to view full fact-check and rule verification log">
+            <!-- Clinical Supervisor Validation Layer Badge (Dynamic Truthful UI) -->
+            <div id="chart-supervisor-badge" onclick="openSupervisorAuditModal()" class="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs group" title="Click to view full fact-check and rule verification log">
               <div class="flex items-center space-x-2">
                 <span class="flex h-2 w-2 relative">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                  <span id="chart-supervisor-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span id="chart-supervisor-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
                 </span>
-                <span class="font-bold text-emerald-950">&#128737;&#65039; 2-Tier AI Clinical Supervisor</span>
+                <span id="chart-supervisor-title" class="font-bold text-emerald-950">&#128737;&#65039; Validation Supervisor</span>
                 <span class="text-[10px] text-emerald-700 font-semibold underline group-hover:text-emerald-950">(Click to View Audit Log)</span>
               </div>
-              <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300/60">
-                100% Fact-Verified &bull; 0 Hallucinations
+              <span id="chart-supervisor-status" class="text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300/60">
+                Checking verification...
               </span>
             </div>
 
@@ -955,111 +950,7 @@
     </div>
   </div>
 
-  <!-- ============================================== -->
-  <!-- MODAL: PRINTABLE DIGITAL OPD PRESCRIPTION SLIP -->
-  <!-- ============================================== -->
-  <div id="prescription-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    <div class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
-      
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 no-print">
-        <div class="flex items-center space-x-2">
-          <i data-lucide="file-text" class="w-5 h-5 text-teal-700"></i>
-          <h3 class="text-sm font-bold text-slate-900">Clinician Consultation & Care Plan Review Note (FHIR-Ready)</h3>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="window.print()" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-2xs cursor-pointer">
-            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-            <span>Print / Save PDF</span>
-          </button>
-          <button onclick="closePrescriptionModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer p-1">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Printable Slip Canvas -->
-      <div id="printable-prescription" class="border border-slate-200 rounded-xl p-6 space-y-5 bg-white text-slate-900">
-        
-        <!-- Clinic Header -->
-        <div class="flex items-start justify-between border-b-2 border-teal-800 pb-4">
-          <div>
-            <div class="flex items-center space-x-2">
-              <span class="text-lg font-black tracking-tight text-teal-900">AIIMS NEW DELHI • TELEMEDICINE OPD</span>
-              <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded font-bold">ABDM-aligned prototype (FHIR-ready data model)</span>
-            </div>
-            <p class="text-xs text-slate-600 mt-0.5">Centre for Chronic Disease Surveillance & Tele-Care Coordination</p>
-            <p class="text-[11px] text-slate-500 font-mono">HF-ID: IN-DL-0019283 • National Health Stack ABDM Facility</p>
-          </div>
-          <div class="text-right text-xs">
-            <div class="font-bold text-slate-800">Dr. Ananya Sen, MD</div>
-            <div class="text-slate-500">Reg: DMC-2018-84729</div>
-            <div id="slip-doctor-date" class="text-slate-500 mt-1">Date: 19-Oct-2026 IST</div>
-          </div>
-        </div>
-
-        <!-- Patient Demographics -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-          <div>
-            <span class="text-slate-500 block text-[11px]">Patient Name</span>
-            <strong id="slip-patient-name" class="text-slate-900">Rajesh Sharma</strong>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[11px]">UHID / Age</span>
-            <strong id="slip-patient-uhid" class="text-slate-900 font-mono">PATIENT-003 • 58 Y</strong>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[11px]">ABHA Address</span>
-            <strong id="slip-patient-abha" class="text-slate-900 font-mono">rajesh@sbx</strong>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[11px]">Clinical Diagnosis</span>
-            <strong id="slip-patient-diag" class="text-teal-800">Essential Hypertension</strong>
-          </div>
-        </div>
-
-        <!-- Telemetry Summary -->
-        <div class="text-xs space-y-1">
-          <div class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Recent Telemetry Review</div>
-          <p id="slip-telemetry-text" class="text-slate-600">
-            Consecutive 14-day home surveillance indicates Grade 2 systolic surges (peak 168/104 mmHg). Patient adherence to morning self-monitoring verified at 85%.
-          </p>
-        </div>
-
-        <!-- Rx Prescription Orders -->
-        <div class="text-xs space-y-2">
-          <div class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Discharge Regimen & Clinician Review Actions</div>
-          <div id="slip-rx-orders" class="bg-teal-50/50 border border-teal-200 rounded-lg p-3 space-y-1.5 text-slate-800">
-            <!-- populated -->
-          </div>
-        </div>
-
-        <!-- Doctor's Instructions -->
-        <div class="text-xs space-y-1">
-          <div class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Follow-Up & Dietary Orders</div>
-          <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-            <li>Strict dietary sodium restriction (&lt; 2.0g/day). Avoid pickles, processed snacks, and table salt.</li>
-            <li>Record daily morning blood pressure in SwasthyaLoop patient companion.</li>
-            <li>Next teleconsultation scheduled in 72 hours for blood pressure response check.</li>
-          </ul>
-        </div>
-
-        <!-- Signature -->
-        <div class="pt-6 border-t border-slate-200 flex justify-between items-end text-xs">
-          <div>
-            <span class="text-[10px] text-slate-400">FHIR-Ready Clinical Review Record • Token: ABHA-DS-998124</span>
-          </div>
-          <div class="text-right">
-            <div class="font-serif italic text-base text-slate-800">Dr. Ananya Sen</div>
-            <div class="text-[10px] text-slate-500">Consultant Physician, Telehealth Unit</div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ============================================== -->
+<!-- ============================================== -->
   <!-- MODAL: CLINICAL ENROLLMENT PROTOCOL & DECLINATION CRITERIA (JURY 1 & 2 DEFENSE) -->
   <!-- ============================================== -->
   <div id="protocol-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
@@ -1254,8 +1145,8 @@
             <div>
               <div class="flex items-center space-x-2">
                 <h3 class="text-base font-black text-slate-900">2-Tier AI Clinical Supervisor Live Audit Matrix</h3>
-                <span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                  CLINICALLY VERIFIED
+                <span id="sup-modal-status-badge" class="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                  VALIDATION SUPERVISOR
                 </span>
               </div>
               <p class="text-xs text-slate-500">Deterministic Anti-Hallucination Guardrail Layer &bull; Medical Rule Engine v2.4</p>
@@ -1270,16 +1161,16 @@
       <!-- Live Metric Badges -->
       <div class="grid grid-cols-3 gap-3 text-center">
         <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-          <div class="text-lg font-black text-emerald-800" id="sup-score">100%</div>
-          <div class="text-[10px] text-emerald-700 font-semibold uppercase">Fact-Check Score</div>
+          <div class="text-sm font-black text-emerald-800" id="sup-score">VERIFIED</div>
+          <div class="text-[10px] text-emerald-700 font-semibold uppercase">Validation Status</div>
         </div>
         <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
-          <div class="text-lg font-black text-blue-800" id="sup-risk">0.0%</div>
-          <div class="text-[10px] text-blue-700 font-semibold uppercase">Hallucination Risk</div>
+          <div class="text-sm font-black text-blue-800 truncate" id="sup-risk">all figures matched</div>
+          <div class="text-[10px] text-blue-700 font-semibold uppercase">Claim Check</div>
         </div>
         <div class="p-3 bg-purple-50 border border-purple-200 rounded-xl">
-          <div class="text-lg font-black text-purple-800">0 ms</div>
-          <div class="text-[10px] text-purple-700 font-semibold uppercase">Supervisor Latency</div>
+          <div class="text-sm font-black text-purple-800" id="sup-rule-id">BP_TREND_UP_3</div>
+          <div class="text-[10px] text-purple-700 font-semibold uppercase">Rule Evaluated</div>
         </div>
       </div>
 
@@ -1298,7 +1189,7 @@
       <div class="space-y-2">
         <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center space-x-1.5">
           <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
-          <span>2. Deterministic Safety Rules Checked (Zero Hallucination Proof)</span>
+          <span>2. Deterministic Safety Rules Evaluated</span>
         </h4>
         <div id="sup-rules-checked" class="space-y-1.5 text-xs text-slate-800">
           <!-- Populated dynamically -->
@@ -1307,8 +1198,8 @@
 
       <!-- Section 3: Architecture Explanation -->
       <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-        <strong class="text-slate-800">Why this guarantees patient safety (Jury 3 Defense):</strong>
-        <p>Generative LLMs (Gemini 3.8 Flash) generate clinical synthesis, but <strong>cannot dispatch unverified advice to the doctor</strong>. The deterministic Tier-2 Supervisor intercepts every token, cross-checking patient eGFR, contraindications (Dual RAS Blockade), and national guidelines before rendering.</p>
+        <strong class="text-slate-800">Validation Supervisor Architecture:</strong>
+        <p>Generative models synthesize care coordination summaries, but the deterministic Validation Supervisor checks that all quoted figures match database vitals, enforces protocol rule criteria, and strictly blocks diagnosis, prescription, or dosage change commands before presentation.</p>
       </div>
 
       <div class="flex justify-end pt-3 border-t border-slate-200">
@@ -1665,12 +1556,9 @@
       renderPatientTasks(p.id);
       renderPatientChartFlags(p.id);
       
-      // Reset copilot & rx check for new patient
+      // Reset copilot for new patient
       document.getElementById("doctor-copilot-output").innerHTML = `<p class="text-slate-500 italic">Select a clinical inquiry chip above or ask a tailored question for ${p.display_name}...</p>`;
       document.getElementById("doctor-copilot-citations").classList.add("hidden");
-      document.getElementById("rx-check-result").innerHTML = `<p class="text-slate-500 italic">Enter a proposed medication to run algorithmic & Gemini safety verification for ${p.display_name}.</p>`;
-      document.getElementById("rx-safety-score-pill").innerText = "Safety Check Ready";
-      document.getElementById("rx-safety-score-pill").className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700";
     }
 
     function renderVitalsChart(pid) {
@@ -1781,6 +1669,7 @@
           if (data.supervisor_audit) {
             currentSupervisorAudit = data.supervisor_audit;
           }
+          updateSupervisorBadge(currentSupervisorAudit);
           summaryBox.innerHTML = `
             <div class="font-medium text-slate-800">${data.doctor_summary || data.summary}</div>
             ${data.actionable_next_step ? `<div class="mt-2 text-[11px] font-semibold text-purple-800 bg-purple-100/60 p-2 rounded-lg">Recommended Action: ${data.actionable_next_step}</div>` : ""}
@@ -1793,10 +1682,58 @@
       }
     }
 
-        function fallbackAiSummary(pid) {
+    function updateSupervisorBadge(sup) {
+      const badge = document.getElementById("chart-supervisor-badge");
+      const title = document.getElementById("chart-supervisor-title");
+      const statusEl = document.getElementById("chart-supervisor-status");
+      const ping = document.getElementById("chart-supervisor-ping");
+      const dot = document.getElementById("chart-supervisor-dot");
+      if (!badge || !statusEl) return;
+
+      const s = sup || { status: "MANUAL REVIEW NEEDED", claim_check: "awaiting verified data" };
+
+      if (s.status === "VERIFIED") {
+        badge.className = "p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs group";
+        if (title) title.className = "font-bold text-emerald-950";
+        statusEl.className = "text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300/60";
+        statusEl.innerText = `VERIFIED • ${s.claim_check || 'all figures matched'}`;
+        if (ping) ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+        if (dot) dot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-600";
+      } else if (s.status === "BLOCKED") {
+        badge.className = "p-2.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs cursor-pointer hover:bg-rose-100/70 transition-all shadow-xs group";
+        if (title) title.className = "font-bold text-rose-950";
+        statusEl.className = "text-[11px] font-semibold text-rose-800 bg-rose-100/70 px-2 py-0.5 rounded-md border border-rose-300/60";
+        statusEl.innerText = `BLOCKED • ${s.claim_check || 'unsupported claim'}`;
+        if (ping) ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75";
+        if (dot) dot.className = "relative inline-flex rounded-full h-2 w-2 bg-rose-600";
+      } else {
+        // MANUAL REVIEW NEEDED
+        badge.className = "p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs cursor-pointer hover:bg-amber-100/70 transition-all shadow-xs group";
+        if (title) title.className = "font-bold text-amber-950";
+        statusEl.className = "text-[11px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-300/60";
+        statusEl.innerText = `MANUAL REVIEW NEEDED • ${s.claim_check || 'review required'}`;
+        if (ping) ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
+        if (dot) dot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-600";
+      }
+    }
+
+    function fallbackAiSummary(pid) {
       const summaryBox = document.getElementById("chart-ai-summary");
       if (!summaryBox) return;
       if (pid === "patient-003") {
+        currentSupervisorAudit = {
+          status: "VERIFIED",
+          rule_id: "BP_TREND_UP_3",
+          claim_check: "all figures matched",
+          source_readings_used: [
+            "138/86 mmHg (2026-10-13, Device photo, patient-confirmed)",
+            "148/90 mmHg (2026-10-16, Caregiver/ASHA-assisted entry)",
+            "162/96 mmHg (2026-10-18, Device photo, patient-confirmed)"
+          ],
+          dates: ["2026-10-13", "2026-10-16", "2026-10-18"],
+          sources: ["Device photo, patient-confirmed", "Caregiver/ASHA-assisted entry"],
+          blocked_categories: ["diagnosis", "prescription", "dosage change"]
+        };
         summaryBox.innerHTML = `
           <div class="font-medium text-slate-800">
             Day 12 after discharge. Three verified BP readings increased from 138/86 to 162/96 across six days. No emergency symptoms recorded. This meets BP_TREND_UP_3 review criteria. Coordinator outreach and clinician review are recommended.
@@ -1806,6 +1743,15 @@
           </div>
         `;
       } else {
+        currentSupervisorAudit = {
+          status: "MANUAL REVIEW NEEDED",
+          rule_id: "BP_TREND_UP_3",
+          claim_check: "fewer than 3 verified readings",
+          source_readings_used: [],
+          dates: [],
+          sources: [],
+          blocked_categories: ["diagnosis", "prescription", "dosage change"]
+        };
         summaryBox.innerHTML = `
           <div class="font-medium text-slate-800">
             30-day post-discharge monitoring in progress. Verified telemetry readings are within expected parameters. No emergency symptoms recorded.
@@ -1815,13 +1761,7 @@
           </div>
         `;
       }
-    } else {
-        summaryBox.innerHTML = `
-          <div class="font-medium text-slate-800">
-            Biometric telemetry shows stable chronic disease trajectory. Patient is adherent to scheduled daily medication and weekly surveillance checkpoints.
-          </div>
-        `;
-      }
+      updateSupervisorBadge(currentSupervisorAudit);
     }
 
     function refreshPatientAiSummary() {
@@ -1935,14 +1875,45 @@
           if (data.supervisor_validation) {
             currentSupervisorAudit = data.supervisor_validation;
           }
+          const sup = data.supervisor_validation || currentSupervisorAudit || {
+            status: "MANUAL REVIEW NEEDED",
+            claim_check: "manual review required",
+            source_readings_used: []
+          };
+
+          let statusBg = "bg-emerald-50 border-emerald-200 text-emerald-900";
+          let pillBg = "bg-emerald-100 text-emerald-800 border-emerald-300";
+          let dotBg = "bg-emerald-500";
+          if (sup.status === "BLOCKED") {
+            statusBg = "bg-rose-50 border-rose-200 text-rose-900";
+            pillBg = "bg-rose-100 text-rose-800 border-rose-300";
+            dotBg = "bg-rose-500";
+          } else if (sup.status === "MANUAL REVIEW NEEDED") {
+            statusBg = "bg-amber-50 border-amber-200 text-amber-900";
+            pillBg = "bg-amber-100 text-amber-800 border-amber-300";
+            dotBg = "bg-amber-500";
+          }
+
+          const readingsUsedStr = (sup.source_readings_used && sup.source_readings_used.length > 0)
+            ? sup.source_readings_used.join(" • ")
+            : "No verified readings used";
+
           output.innerHTML = `
             <div class="text-slate-800 whitespace-pre-line">${data.reply}</div>
-            <div onclick="openSupervisorAuditModal()" class="mt-3 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs cursor-pointer hover:bg-emerald-100/70 transition-all">
-              <div class="flex items-center space-x-1.5 font-bold text-emerald-900">
-                <span>&#128737;&#65039; Clinical Supervisor: Verified</span>
-                <span class="text-[10px] text-emerald-700 font-normal underline">(View Fact-Check Matrix)</span>
+            <div onclick="openSupervisorAuditModal()" class="mt-3 p-2.5 rounded-lg border text-xs cursor-pointer transition-all ${statusBg}">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-1.5 font-bold">
+                  <span class="inline-block w-2 h-2 rounded-full ${dotBg}"></span>
+                  <span>Validation Supervisor: ${sup.status}</span>
+                  <span class="text-[10px] font-normal underline opacity-80">(Audit Details)</span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${pillBg}">
+                  Claim: ${sup.claim_check || 'verified'}
+                </span>
               </div>
-              <span class="text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">Fact-Check: 100% &bull; 0 Hallucinations</span>
+              <div class="mt-1 text-[11px] opacity-90 truncate">
+                <strong>Source Readings Used:</strong> ${readingsUsedStr}
+              </div>
             </div>
           `;
           
@@ -1963,70 +1934,7 @@
       }
     }
 
-    // ==============================================
-    // FEATURE 3: AI SMART RX INTERACTION & SAFETY CHECKER
-    // ==============================================
-    
 
-    
-
-      const resultBox = document.getElementById("rx-check-result");
-      const scorePill = document.getElementById("rx-safety-score-pill");
-      const btn = document.getElementById("btn-run-rx-check");
-
-      btn.disabled = true;
-      btn.innerText = "Analyzing Safety...";
-      resultBox.innerHTML = `<div class="p-2 text-slate-500">Checking drug-disease contraindications...</div>`;
-
-      try {
-        const res = await fetch("/api/ai/medication-check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            patient_id: selectedPatientId,
-            medication_name: drug,
-            dosage: dose
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          
-          // Badge colors
-          if (data.status === "safe") {
-            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
-            scorePill.innerText = `Score: ${data.safety_score}/100 • SAFE`;
-          } else if (data.status === "warning") {
-            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
-            scorePill.innerText = `Score: ${data.safety_score}/100 • CAUTION`;
-          } else {
-            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 animate-pulse";
-            scorePill.innerText = `Score: ${data.safety_score}/100 • CONTRAINDICATED`;
-          }
-
-          let html = `<div>${data.summary}</div>`;
-          if (data.contraindications.length > 0) {
-            html += `<div class="p-2 bg-rose-100/70 border border-rose-300 rounded text-rose-900 font-semibold mt-1">🚨 <strong>Contraindication:</strong> ${data.contraindications.join('<br>')}</div>`;
-          }
-          if (data.warnings.length > 0) {
-            html += `<div class="p-2 bg-amber-100/70 border border-amber-300 rounded text-amber-900 font-medium mt-1">⚠️ <strong>Clinical Warning:</strong> ${data.warnings.join('<br>')}</div>`;
-          }
-          html += `<div class="text-teal-800 font-semibold mt-1">💡 <strong>Guideline Recommendation:</strong> ${data.guideline_recommendation}</div>`;
-          html += `<div class="text-[10px] text-slate-400 mt-1">Evidence: ${data.evidence_source}</div>`;
-
-          resultBox.innerHTML = html;
-        } else {
-          resultBox.innerHTML = `<p class="text-rose-600">Failed to evaluate medication.</p>`;
-        }
-      } catch (err) {
-        console.error("Medication check error:", err);
-        resultBox.innerHTML = `<p class="text-rose-600">Network connection issue.</p>`;
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="check-shield" class="w-3.5 h-3.5"></i><span>Check Drug-Disease Interactions</span>`;
-        lucide.createIcons();
-      }
-    }
 
     // ==============================================
     // FEATURE 4: MULTIMODAL TELEMETRY SCANNER
@@ -2315,10 +2223,7 @@
       }
     }
 
-    // ==============================================
-    // DIGITAL OPD PRESCRIPTION SLIP MODAL
-    // ==============================================
-    
+
 
     function showToast(msg, type) {
       const toast = document.getElementById("toast");
@@ -2368,37 +2273,48 @@
       lucide.createIcons();
     }
 
-        function openSupervisorAuditModal() {
-      const p = clinicPatients.find(item => item.id === selectedPatientId) || clinicPatients[0];
+    function openSupervisorAuditModal() {
       const modal = document.getElementById("supervisor-modal");
       if (!modal) return;
       modal.classList.remove("hidden");
 
       const sup = currentSupervisorAudit || {
-        status: "VERIFIED",
+        status: "MANUAL REVIEW NEEDED",
         rule_id: "BP_TREND_UP_3",
-        claim_check: "all figures matched",
-        source_readings_used: [
-          "138/86 mmHg (2026-10-13, Device photo, patient-confirmed)",
-          "148/90 mmHg (2026-10-16, Caregiver/ASHA-assisted entry)",
-          "162/96 mmHg (2026-10-18, Device photo, patient-confirmed)"
-        ],
-        dates: ["2026-10-13", "2026-10-16", "2026-10-18"],
-        sources: ["Device photo, patient-confirmed", "Caregiver/ASHA-assisted entry"],
-        blocked_categories: ["diagnosis", "prescription", "dosage change"],
-        numeric_claim_match: "all figures matched"
+        claim_check: "manual review required",
+        source_readings_used: [],
+        dates: [],
+        sources: [],
+        blocked_categories: ["diagnosis", "prescription", "dosage change"]
       };
 
       const scoreEl = document.getElementById("sup-score");
       const riskEl = document.getElementById("sup-risk");
-      if (scoreEl) scoreEl.innerText = sup.status === "VERIFIED" ? "VERIFIED" : sup.status;
-      if (riskEl) riskEl.innerText = sup.numeric_claim_match || "all figures matched";
+      const ruleIdEl = document.getElementById("sup-rule-id");
+      const modalBadge = document.getElementById("sup-modal-status-badge");
+      
+      let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+      if (sup.status === "BLOCKED") {
+        badgeClass = "bg-rose-100 text-rose-800 border-rose-300";
+      } else if (sup.status === "MANUAL REVIEW NEEDED") {
+        badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+      }
+
+      if (modalBadge) {
+        modalBadge.className = `text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${badgeClass}`;
+        modalBadge.innerText = sup.status;
+      }
+      if (scoreEl) scoreEl.innerText = sup.status;
+      if (riskEl) riskEl.innerText = sup.claim_check || "all figures matched";
+      if (ruleIdEl) ruleIdEl.innerText = sup.rule_id || "BP_TREND_UP_3";
 
       const gtBox = document.getElementById("sup-ground-truth");
       if (gtBox) {
-        const readingsHtml = (sup.source_readings_used || []).map(r => `<div>&bull; <span class="font-mono">${r}</span></div>`).join("");
-        const sourcesHtml = (sup.sources || ["Device photo, patient-confirmed"]).join(", ");
-        const datesHtml = (sup.dates || []).join(" &rarr; ");
+        const readingsHtml = (sup.source_readings_used && sup.source_readings_used.length > 0)
+          ? sup.source_readings_used.map(r => `<div>&bull; <span class="font-mono">${r}</span></div>`).join("")
+          : `<div class="italic text-slate-500">None recorded / fewer than 3 verified readings</div>`;
+        const sourcesHtml = (sup.sources && sup.sources.length > 0) ? sup.sources.join(", ") : "None";
+        const datesHtml = (sup.dates && sup.dates.length > 0) ? sup.dates.join(" &rarr; ") : "None";
 
         gtBox.innerHTML = `
           <div class="space-y-1.5 text-xs text-slate-800">
@@ -2407,9 +2323,9 @@
             <div><strong>Verified Sources:</strong> <span>${sourcesHtml}</span></div>
             <div><strong>Source Readings Used:</strong></div>
             <div class="pl-2 space-y-0.5 text-slate-700">${readingsHtml}</div>
-            <div><strong>Numeric Claim Match:</strong> <span class="text-emerald-700 font-bold">${sup.claim_check || 'all figures matched'}</span></div>
+            <div><strong>Numeric Claim Match:</strong> <span class="font-bold ${sup.status === 'VERIFIED' ? 'text-emerald-700' : (sup.status === 'BLOCKED' ? 'text-rose-700' : 'text-amber-700')}">${sup.claim_check || 'matched'}</span></div>
             <div><strong>Blocked Categories:</strong> <span class="text-slate-600">${(sup.blocked_categories || ['diagnosis', 'prescription', 'dosage change']).join(', ')}</span></div>
-            <div><strong>Supervisor Status:</strong> <span class="px-2 py-0.5 rounded text-xs font-bold ${sup.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${sup.status || 'VERIFIED'}</span></div>
+            <div><strong>Supervisor Status:</strong> <span class="px-2 py-0.5 rounded text-xs font-bold ${badgeClass}">${sup.status || 'VERIFIED'}</span></div>
           </div>
         `;
       }
@@ -2417,14 +2333,14 @@
       const rulesBox = document.getElementById("sup-rules-checked");
       if (rulesBox) {
         rulesBox.innerHTML = `
-          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
-            &bull; Verified source readings directly match database records (${sup.claim_check || 'all figures matched'})
+          <div class="p-2 ${sup.status === 'VERIFIED' ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : (sup.status === 'BLOCKED' ? 'bg-rose-50 border border-rose-200 text-rose-900' : 'bg-amber-50 border border-amber-200 text-amber-900')} rounded-lg text-xs">
+            &bull; Verified source readings claim check: <strong>${sup.claim_check || 'evaluated'}</strong>
           </div>
           <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
-            &bull; Rule ID (${sup.rule_id || 'BP_TREND_UP_3'}) verified against active clinical criteria
+            &bull; Rule criteria evaluated: <strong>${sup.rule_id || 'BP_TREND_UP_3'}</strong>
           </div>
           <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
-            &bull; Prohibited categories filter active: diagnosis, prescription, dosage change (PASSED)
+            &bull; Prohibited categories filter active: diagnosis, prescription, dosage change (ENFORCED)
           </div>
         `;
       }

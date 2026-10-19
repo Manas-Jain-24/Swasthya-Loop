@@ -187,7 +187,12 @@ def ask_clinical_copilot(
     readings = db.query(Reading).filter(Reading.patient_id == patient_id).order_by(Reading.recorded_at.desc()).limit(10).all()
     flags = db.query(FollowupFlag).filter(FollowupFlag.patient_id == patient_id, FollowupFlag.status == "open").all()
     cohort = get_patient_cohort_info(patient_id)
-    bp_readings = [r for r in readings if r.type == "blood_pressure" and r.systolic_mmhg is not None]
+    bp_readings = [
+        r for r in readings 
+        if r.type == "blood_pressure" 
+        and r.systolic_mmhg is not None 
+        and r.source in VERIFIED_BP_SOURCES
+    ]
 
     # Pre-compute verified 3-reading trend trajectory if present
     has_rising_trend = False
@@ -274,7 +279,7 @@ def ask_clinical_copilot(
         old_bp_str = f"{int(r_old.systolic_mmhg)}/{int(r_old.diastolic_mmhg or 0)}"
         new_bp_str = f"{int(r_new.systolic_mmhg)}/{int(r_new.diastolic_mmhg or 0)}"
 
-        if is_rising or has_rising_trend:
+        if is_rising:
             canonical_handoff = (
                 f"Day {day_num} after discharge. Three verified BP readings increased from {old_bp_str} to {new_bp_str} across {days_str}. "
                 "No emergency symptoms recorded. This meets BP_TREND_UP_3 review criteria. "
