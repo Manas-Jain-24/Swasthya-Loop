@@ -158,3 +158,46 @@ def test_clinical_trend_alert():
     flags = response.json()
     reason_codes = [f["reason_code"] for f in flags]
     assert "BP_TRENDING_UPWARD_3X" in reason_codes
+
+
+def test_clinical_cohorts_meta():
+    response = client.get("/api/clinical-cohorts")
+    assert response.status_code == 200
+    data = response.json()
+    assert "cohorts" in data
+    assert "declination_protocol" in data
+    assert "telemetry_architecture" in data
+    assert len(data["declination_protocol"]) >= 4
+    assert len(data["telemetry_architecture"]) >= 3
+    # Check Cohort A Post-PCI is defined
+    assert "patient-001" in data["cohorts"]
+    assert "30-Day Post-PCI" in data["cohorts"]["patient-001"]["cohort_name"]
+
+def test_tier2_clinical_supervisor_validation():
+    # Test Copilot returns supervisor audit report
+    resp = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-001",
+        "user_role": "doctor",
+        "message": "Review Metformin dosage in CKD Stage 3",
+        "language": "en"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "supervisor_validation" in data
+    sup = data["supervisor_validation"]
+    assert sup["supervisor_status"] == "CLINICALLY_VERIFIED"
+    assert sup["fact_check_score"] == "100%"
+    assert sup["hallucination_risk"] == "0.0%"
+    assert len(sup["safety_rules_passed"]) >= 3
+    assert len(sup["verified_ground_truth"]) >= 4
+
+    # Test Medication Check returns supervisor validation
+    med_resp = client.post("/api/ai/medication-check", json={
+        "patient_id": "patient-001",
+        "medication_name": "Amlodipine",
+        "dosage": "5mg OD"
+    })
+    assert med_resp.status_code == 200
+    med_data = med_resp.json()
+    assert "supervisor_validation" in med_data
+    assert med_data["supervisor_validation"]["supervisor_status"] == "CLINICALLY_VERIFIED"

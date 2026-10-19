@@ -26,6 +26,38 @@ class Patient(Base):
     def conditions(self, val):
         self._conditions = json.dumps(val)
 
+    @property
+    def cohort_badge(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("cohort_badge", "Post-Discharge")
+        except Exception:
+            return "Post-Discharge"
+
+    @property
+    def cohort_name(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Discharge Titration")
+        except Exception:
+            return "30-Day Discharge Titration"
+
+    @property
+    def exit_milestone(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("exit_milestone", "Day 30 Review")
+        except Exception:
+            return "Day 30 Review"
+
+    @property
+    def telemetry_source(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("telemetry_source", "ASHA Sub-Centre + LCD Photo-OCR")
+        except Exception:
+            return "ASHA Sub-Centre + LCD Photo-OCR" 
+
     care_plan = relationship("CarePlan", back_populates="patient", uselist=False, cascade="all, delete-orphan")
     readings = relationship("Reading", back_populates="patient", cascade="all, delete-orphan")
     tasks = relationship("CareTask", back_populates="patient", cascade="all, delete-orphan")
@@ -54,6 +86,38 @@ class CarePlan(Base):
     @conditions.setter
     def conditions(self, val):
         self._conditions = json.dumps(val)
+
+    @property
+    def cohort_badge(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("cohort_badge", "Post-Discharge")
+        except Exception:
+            return "Post-Discharge"
+
+    @property
+    def cohort_name(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("cohort_name", "30-Day Discharge Titration")
+        except Exception:
+            return "30-Day Discharge Titration"
+
+    @property
+    def exit_milestone(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("exit_milestone", "Day 30 Review")
+        except Exception:
+            return "Day 30 Review"
+
+    @property
+    def telemetry_source(self):
+        try:
+            from .services.clinical_cohorts import get_patient_cohort_info
+            return get_patient_cohort_info(self.id).get("telemetry_source", "ASHA Sub-Centre + LCD Photo-OCR")
+        except Exception:
+            return "ASHA Sub-Centre + LCD Photo-OCR" 
 
     @property
     def monitoring(self):

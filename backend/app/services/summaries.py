@@ -2,6 +2,7 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from ..models import Patient, Reading, CareTask, FollowupFlag, CarePlan
 from .llm_provider import generate_plain_language_summary
+from .clinical_cohorts import get_patient_cohort_info
 
 SAFETY_DISCLAIMER = (
     "SwasthyaLoop Prototype Disclaimer: This summary is for care-coordination and follow-up reference only. "
@@ -72,21 +73,37 @@ def generate_patient_summary(db: Session, patient_id: str) -> Dict[str, Any]:
     # 2. Try Optional Constrained LLM
     ai_summary = generate_plain_language_summary(facts, condition_name)
 
+    cohort = get_patient_cohort_info(patient_id)
+    # Import supervisor dynamically to prevent circular imports
+    from .ai_copilot import run_tier2_clinical_supervisor
+    readings = db.query(Reading).filter(Reading.patient_id == patient_id).order_by(Reading.recorded_at.desc()).all()
+    flags = db.query(FollowupFlag).filter(FollowupFlag.patient_id == patient_id, FollowupFlag.status == "open").all()
+
     if ai_summary:
+        sup = run_tier2_clinical_supervisor(patient, ai_summary, [], readings, flags)
         return {
             "patient_id": patient_id,
             "summary": ai_summary,
             "used_facts": facts,
             "is_ai_generated": True,
             "fallback_used": False,
-            "safety_disclaimer": SAFETY_DISCLAIMER
+            "safety_disclaimer": SAFETY_DISCLAIMER,
+            "clinical_cohort": cohort["cohort_name"],
+            "exit_milestone": cohort["exit_milestone"],
+            "telemetry_source": cohort["telemetry_source"],
+            "supervisor_audit": sup
         }
     else:
+        sup = run_tier2_clinical_supervisor(patient, deterministic_summary, [], readings, flags)
         return {
             "patient_id": patient_id,
             "summary": deterministic_summary,
             "used_facts": facts,
             "is_ai_generated": False,
             "fallback_used": True,
-            "safety_disclaimer": SAFETY_DISCLAIMER
+            "safety_disclaimer": SAFETY_DISCLAIMER,
+            "clinical_cohort": cohort["cohort_name"],
+            "exit_milestone": cohort["exit_milestone"],
+            "telemetry_source": cohort["telemetry_source"],
+            "supervisor_audit": sup
         }

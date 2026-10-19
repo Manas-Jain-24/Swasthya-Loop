@@ -18,6 +18,10 @@ class PatientResponse(BaseModel):
     preferred_language: str
     care_plan_id: Optional[str] = None
     is_demo_data: bool = True
+    cohort_badge: Optional[str] = None
+    cohort_name: Optional[str] = None
+    exit_milestone: Optional[str] = None
+    telemetry_source: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -141,6 +145,10 @@ class SummaryResponse(BaseModel):
     is_ai_generated: bool
     fallback_used: bool
     safety_disclaimer: str
+    clinical_cohort: Optional[str] = None
+    exit_milestone: Optional[str] = None
+    telemetry_source: Optional[str] = None
+    supervisor_audit: Optional[dict] = None
 
 
 # =====================================================================
@@ -159,6 +167,7 @@ class CopilotMessageResponse(BaseModel):
     citations: List[str] = []
     suggested_actions: List[str] = []
     source: str = "gemini-3.8-flash"
+    supervisor_validation: Optional[dict] = None
 
 class MedicationCheckRequest(BaseModel):
     patient_id: str
@@ -175,6 +184,7 @@ class MedicationCheckResponse(BaseModel):
     warnings: List[str] = []
     guideline_recommendation: str
     evidence_source: str
+    supervisor_validation: Optional[dict] = None
 
 class ScanImageRequest(BaseModel):
     image_base64: str

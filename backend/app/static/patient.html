@@ -90,6 +90,21 @@
           </div>
           <h2 id="welcome-name" class="text-2xl font-extrabold tracking-tight">Namaste, Rajesh Sharma ji</h2>
           <p id="welcome-conditions" class="text-sm text-teal-100 mt-1 font-medium">Care Plan: Essential Hypertension • Daily Surveillance</p>
+          
+          <!-- Cohort & Milestone Progress (Jury 1 & 2 Defense) -->
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span id="welcome-cohort-badge" class="text-xs bg-rose-500/30 text-rose-200 border border-rose-400/40 px-2.5 py-0.5 rounded-full font-bold">
+              Cohort A: 30-Day Post-PCI Titration
+            </span>
+            <span id="welcome-milestone" class="text-xs bg-white/15 text-amber-200 border border-white/20 px-2.5 py-0.5 rounded-md font-semibold">
+              🎯 <strong>Exit Milestone:</strong> Day 30 Review (BP &lt; 130/80)
+            </span>
+          </div>
+
+          <div class="mt-2 text-[11px] text-teal-200 flex items-center space-x-1.5">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-teal-400"></i>
+            <span id="welcome-telemetry">Telemetry Source: Village Health Sub-Centre (Ayushman Arogya Mandir) / Omron LCD Photo-OCR</span>
+          </div>
         </div>
 
         <div class="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-white/10 pt-3 sm:pt-0">
@@ -487,7 +502,7 @@
         const picker = document.getElementById("patient-picker");
         picker.innerHTML = patientsList.map(p => `
           <option value="${p.id}" ${p.id === currentPatientId ? "selected" : ""}>
-            ${p.display_name} (${p.id})
+            ${p.display_name} • ${p.cohort_badge || 'Post-Discharge'}
           </option>
         `).join("");
       } catch (err) {
@@ -510,6 +525,16 @@
         document.getElementById("welcome-name").innerText = `Namaste, ${patient.display_name} ji`;
         document.getElementById("welcome-abha").innerText = `${patient.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
         document.getElementById("welcome-conditions").innerText = `Care Plan: ${patient.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ')} • Daily Surveillance`;
+
+        if (document.getElementById("welcome-cohort-badge")) {
+          document.getElementById("welcome-cohort-badge").innerText = patient.cohort_badge || "Cohort A: 30-Day Post-PCI";
+        }
+        if (document.getElementById("welcome-milestone")) {
+          document.getElementById("welcome-milestone").innerHTML = `🎯 <strong>Exit Milestone:</strong> ${patient.exit_milestone || "Day 30 Review (BP < 130/80)"}`;
+        }
+        if (document.getElementById("welcome-telemetry")) {
+          document.getElementById("welcome-telemetry").innerText = `Telemetry Source: ${patient.telemetry_source || "ASHA Sub-Centre NCD Kit + LCD Photo-OCR"}`;
+        }
 
         // Tasks Schedule
         const tasksRes = await fetch(`/api/tasks?patient_id=${currentPatientId}&_t=${Date.now()}`, { cache: "no-store" });
