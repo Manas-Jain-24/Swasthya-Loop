@@ -43,9 +43,18 @@ def health_check():
 
 @router.post("/patients", response_model=PatientResponse)
 def create_patient(payload: PatientCreate, db: Session = Depends(get_db)):
-    # Generate sequential patient ID
-    existing_count = db.query(Patient).count()
-    new_id = f"patient-{existing_count + 1:03d}"
+    # Generate sequential patient ID based on highest existing numerical suffix
+    all_patients = db.query(Patient.id).all()
+    max_num = 0
+    for (pid,) in all_patients:
+        if pid and pid.startswith("patient-"):
+            try:
+                num = int(pid.split("-")[1])
+                if num > max_num:
+                    max_num = num
+            except Exception:
+                pass
+    new_id = f"patient-{max_num + 1:03d}"
     now_iso = datetime.now(timezone.utc).isoformat()
 
     new_patient = Patient(
@@ -218,27 +227,34 @@ def list_all_readings(patient_id: Optional[str] = None, db: Session = Depends(ge
         query = query.filter(Reading.patient_id == patient_id)
     return query.order_by(Reading.recorded_at.desc()).all()
 
+class ResolveFlagPayload(BaseModel):
+    note: Optional[str] = "Resolved by clinician in command center"
+
 @router.get("/triage-flags", response_model=List[FollowupFlagResponse])
 @router.get("/followups", response_model=List[FollowupFlagResponse])
 def list_followups(patient_id: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(FollowupFlag)
     if patient_id:
         query = query.filter(FollowupFlag.patient_id == patient_id)
-    if status:
+    if status and status != "all":
         query = query.filter(FollowupFlag.status == status)
-    else:
+    elif not status:
         # Default to open items
         query = query.filter(FollowupFlag.status == "open")
 
     return query.order_by(FollowupFlag.created_at.desc()).all()
 
+@router.post("/triage-flags/{flag_id}/resolve", response_model=FollowupFlagResponse)
+@router.post("/followups/{flag_id}/resolve", response_model=FollowupFlagResponse)
 @router.patch("/triage-flags/{flag_id}/resolve", response_model=FollowupFlagResponse)
 @router.patch("/followups/{flag_id}/resolve", response_model=FollowupFlagResponse)
-def resolve_followup(flag_id: str, db: Session = Depends(get_db)):
+def resolve_followup(flag_id: str, payload: Optional[ResolveFlagPayload] = None, db: Session = Depends(get_db)):
     flag = db.query(FollowupFlag).filter(FollowupFlag.id == flag_id).first()
     if not flag:
         raise HTTPException(status_code=404, detail="Follow-up flag not found.")
     flag.status = "resolved"
+    if payload and payload.note:
+        flag.resolution_note = payload.note
 
     # If this flag was for an overdue task, automatically mark the corresponding care task as completed!
     if flag.category == "missing_task" or flag.source_rule_id == "rule-missing-reading-v1":
@@ -257,13 +273,12 @@ def resolve_followup(flag_id: str, db: Session = Depends(get_db)):
                 matched = True
                 break
         
-        # If not exact match, complete the earliest overdue task
+        # If not exact match, complete all overdue tasks for this patient
         if not matched:
             for t in pending_tasks:
                 if t.due_at <= now_iso:
                     t.status = "completed"
                     t.completed_at = now_iso
-                    break
 
     db.commit()
     db.refresh(flag)

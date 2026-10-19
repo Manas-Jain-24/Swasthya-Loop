@@ -62,6 +62,27 @@ def ask_clinical_copilot(
     flags_str = "; ".join(f"{f.priority.upper()}: {f.reason}" for f in flags) if flags else "No active alerts"
 
     # Emergency keyword detection for patient queries
+    # Guard against empty / whitespace query
+    if not message or not message.strip():
+        if user_role == "doctor":
+            return {
+                "reply": "Please select a quick prompt chip above or type a clinical inquiry regarding guideline titration, contraindications, or telemetry analysis.",
+                "audio_text": "Please provide a clinical question.",
+                "is_emergency": False,
+                "citations": ["Indian Guidelines on Hypertension (IGH IV)", "ICMR Diabetes Guidelines"],
+                "suggested_actions": ["Select a quick prompt chip", "Check Metformin in CKD"],
+                "source": "clinical_engine_fallback"
+            }
+        else:
+            return {
+                "reply": f"नमस्ते {patient.display_name} जी! आप मुझसे अपनी दवा, बीपी, आहार या स्वास्थ्य से जुड़ा कोई भी सवाल पूछ सकते हैं।",
+                "audio_text": f"नमस्ते {patient.display_name} जी! आप मुझसे अपनी दवा या बीपी से जुड़ा कोई भी सवाल पूछ सकते हैं।",
+                "is_emergency": False,
+                "citations": ["Swasthya Saathi"],
+                "suggested_actions": ["दवा का समय", "बीपी बढ़ने पर क्या करें"],
+                "source": "clinical_engine_fallback"
+            }
+
     lower_msg = message.lower()
     emergency_keywords = [
         "chest pain", "pressure in chest", "left arm pain", "breathless", "short of breath",

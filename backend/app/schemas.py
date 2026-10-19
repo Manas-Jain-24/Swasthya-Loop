@@ -54,7 +54,7 @@ class ReadingCreate(BaseModel):
             if self.diastolic_mmhg < 20 or self.diastolic_mmhg > 200:
                 raise ValueError(f"Diastolic blood pressure {self.diastolic_mmhg} is outside plausible physiological range (20-200 mmHg).")
             if self.systolic_mmhg <= self.diastolic_mmhg:
-                raise ValueError("Systolic pressure must be strictly greater than diastolic pressure.")
+                raise ValueError(f"Systolic blood pressure ({self.systolic_mmhg} mmHg) must be strictly greater than diastolic blood pressure ({self.diastolic_mmhg} mmHg).")
             if self.unit and self.unit != "mmHg":
                 raise ValueError("Blood pressure unit must be 'mmHg'.")
             self.unit = "mmHg"
