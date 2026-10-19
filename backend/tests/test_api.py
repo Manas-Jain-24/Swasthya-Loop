@@ -89,3 +89,52 @@ def test_summary_deterministic_fallback():
     assert "summary" in data
     assert len(data["used_facts"]) > 0
     assert "safety_disclaimer" in data
+
+
+def test_ai_copilot_doctor():
+    response = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-001",
+        "user_role": "doctor",
+        "message": "What is the recommended next step for blood pressure control?",
+        "language": "en"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert "reply" in data
+    assert len(data["reply"]) > 10
+    assert data["is_emergency"] is False
+    assert len(data["citations"]) > 0
+
+def test_ai_copilot_emergency_sentinel():
+    response = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-001",
+        "user_role": "patient",
+        "message": "I am having severe chest pain and left arm discomfort",
+        "language": "en"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_emergency"] is True
+    assert "108" in data["reply"]
+
+def test_ai_medication_check():
+    response = client.post("/api/ai/medication-check", json={
+        "patient_id": "patient-001",
+        "medication_name": "Amlodipine",
+        "dosage": "5mg OD"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] in ["safe", "warning", "contraindicated"]
+    assert "safety_score" in data
+
+def test_ai_scan_image():
+    response = client.post("/api/ai/scan-image", json={
+        "image_base64": "",
+        "device_hint": "bp_monitor",
+        "patient_id": "patient-001"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["detected_device"] == "digital_bp_monitor"
+    assert data["systolic_mmhg"] is not None

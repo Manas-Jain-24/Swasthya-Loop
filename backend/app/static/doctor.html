@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E">
-  <title>SwasthyaLoop — Clinician Command Center</title>
+  <title>SwasthyaLoop — Clinician Command Center & AI Copilot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -55,6 +55,9 @@
             <div class="flex items-center space-x-2">
               <span class="text-base font-extrabold text-slate-900 tracking-tight">SwasthyaLoop</span>
               <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Clinician Hub</span>
+              <span class="hidden sm:inline-flex items-center text-[10px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                <i data-lucide="sparkles" class="w-3 h-3 text-purple-600 mr-1"></i> Gemini 3.8 AI
+              </span>
             </div>
             <p class="text-[11px] text-slate-500 font-medium">ABDM M2 Telehealth & Chronic Care CDSS</p>
           </div>
@@ -77,6 +80,12 @@
           <i data-lucide="refresh-cw" id="refresh-icon" class="w-4 h-4"></i>
         </button>
 
+        <!-- "📸 Scan Telemetry" Button -->
+        <button onclick="openScanModal()" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all cursor-pointer">
+          <i data-lucide="camera" class="w-3.5 h-3.5 text-purple-600"></i>
+          <span class="hidden sm:inline">AI Scanner</span>
+        </button>
+
         <!-- "+ Add Patient" Button -->
         <button onclick="openAddPatientModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer">
           <i data-lucide="user-plus" class="w-4 h-4"></i>
@@ -84,8 +93,8 @@
         </button>
 
         <!-- Link to Patient Companion -->
-        <a href="/patient" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
-          <i data-lucide="heart-pulse" class="w-3.5 h-3.5 text-purple-600"></i>
+        <a href="/patient" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+          <i data-lucide="heart-pulse" class="w-3.5 h-3.5 text-teal-600"></i>
           <span class="hidden sm:inline">Patient Portal</span>
         </a>
 
@@ -112,7 +121,7 @@
         </button>
         <button onclick="switchTab('chart')" id="tab-chart" class="py-2.5 px-1 text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 cursor-pointer">
           <i data-lucide="line-chart" class="w-4 h-4"></i>
-          <span>Patient Chart & AI Insights</span>
+          <span>Patient Chart & AI Copilot</span>
         </button>
       </div>
     </div>
@@ -234,20 +243,20 @@
               <div class="p-2.5 bg-amber-50/70 border border-amber-200 rounded-lg">
                 <strong class="text-amber-800">Hypoglycemia Risk:</strong> Fasting Blood Sugar &le; 70 mg/dL triggers urgent carbohydrate guidance.
               </div>
-              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                <strong class="text-slate-800">Missed Vitals Surveillance:</strong> 48h non-reporting alerts care coordinator for proactive phone outreach.
+              <div class="p-2.5 bg-purple-50/70 border border-purple-200 rounded-lg">
+                <strong class="text-purple-800">Gemini 3.8 AI Copilot:</strong> Interactive clinical reasoning and organ-specific interaction checks.
               </div>
             </div>
           </div>
 
           <div class="pt-3 border-t border-slate-100 flex flex-col gap-2">
+            <button onclick="openScanModal()" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-2xs transition-all cursor-pointer">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>Scan Device / Prescription Photo</span>
+            </button>
             <button onclick="openAddPatientModal()" class="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-2xs transition-all cursor-pointer">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span>Enroll New Patient</span>
-            </button>
-            <button onclick="switchTab('chart')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition-all cursor-pointer">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i>
-              <span>Inspect AI Clinical Summary</span>
             </button>
           </div>
         </div>
@@ -259,7 +268,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-bold text-slate-900">Enrolled Patient Cohort</h3>
-            <p class="text-xs text-slate-500">Click any patient row to open their longitudinal chart & Gemini clinical insights</p>
+            <p class="text-xs text-slate-500">Click any patient row to open their longitudinal chart, AI Copilot & Rx Safety checker</p>
           </div>
           <button onclick="switchTab('directory')" class="text-xs font-semibold text-teal-700 hover:text-teal-900 flex items-center space-x-1 cursor-pointer">
             <span>Explore Full Cohort Directory</span>
@@ -361,7 +370,7 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 4: PATIENT CHART & AI CLINICAL INSIGHTS -->
+    <!-- TAB 4: PATIENT CHART & ADVANCED AI COPILOT -->
     <!-- ============================================== -->
     <div id="view-chart" class="hidden space-y-6">
       
@@ -378,19 +387,23 @@
           </div>
 
           <div class="flex items-center space-x-2">
+            <button onclick="openScanModal()" class="px-3 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span>Scan Telemetry Photo</span>
+            </button>
             <button onclick="openDoctorPrescriptionSlip()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer">
               <i data-lucide="printer" class="w-4 h-4"></i>
               <span>Generate OPD Slip</span>
             </button>
             <a id="chart-view-patient-portal" href="/patient?patient_id=patient-003" class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-              <span>Open in Patient Portal</span>
+              <span>Patient View</span>
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Two Column Layout: Longitudinal Chart + Gemini AI Clinical Briefing -->
+      <!-- Top Row: Longitudinal Chart + Gemini AI Clinical Briefing -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Left: Longitudinal Chart.js Analytics (2 cols) -->
@@ -464,6 +477,110 @@
 
       </div>
 
+      <!-- ============================================== -->
+      <!-- NEW FEATURE: AI COPILOT & AI RX SAFETY CHECKER -->
+      <!-- ============================================== -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- FEATURE 1: ASK SWASTHYA AI CLINICAL COPILOT -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div class="flex items-center space-x-2">
+                <div class="p-1.5 bg-teal-50 text-teal-700 rounded-lg">
+                  <i data-lucide="bot" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">Ask Swasthya AI Clinical Copilot</h3>
+                  <p class="text-xs text-slate-500">Real-time physician decision support citing IGH IV & ICMR</p>
+                </div>
+              </div>
+              <span class="text-[10px] bg-teal-50 text-teal-800 font-bold px-2 py-0.5 rounded border border-teal-200">Gemini 3.8 Flash</span>
+            </div>
+
+            <!-- Quick prompt chips -->
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="setCopilotQuery('What is the recommended titration protocol under IGH IV for this patient?')" class="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-2.5 py-1 rounded-md text-slate-700 transition-colors cursor-pointer">
+                Titration protocol for SBP surge?
+              </button>
+              <button onclick="setCopilotQuery('Check Metformin safety and dosage in CKD Stage 3.')" class="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-2.5 py-1 rounded-md text-slate-700 transition-colors cursor-pointer">
+                Metformin safety in CKD?
+              </button>
+              <button onclick="setCopilotQuery('Why is combining ACEi and ARB contraindicated?')" class="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-2.5 py-1 rounded-md text-slate-700 transition-colors cursor-pointer">
+                Dual RAS Blockade alert?
+              </button>
+            </div>
+
+            <!-- Copilot Answer Box -->
+            <div id="doctor-copilot-output" class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-2 max-h-48 overflow-y-auto leading-relaxed">
+              <p class="text-slate-500 italic">Select a clinical inquiry chip above or type your question below...</p>
+            </div>
+
+            <div id="doctor-copilot-citations" class="hidden text-[11px] text-teal-800 font-semibold bg-teal-50/70 p-2 rounded-lg border border-teal-100">
+              <!-- citations populated -->
+            </div>
+          </div>
+
+          <!-- Question Input Form -->
+          <form onsubmit="submitDoctorCopilot(event)" class="pt-2 flex items-center space-x-2">
+            <input type="text" id="doctor-copilot-input" placeholder="Ask guideline question (e.g. Next step for SBP surge)..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            <button type="submit" id="btn-doctor-copilot" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center space-x-1 cursor-pointer">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>Consult</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- FEATURE 3: AI SMART RX INTERACTION & SAFETY CHECKER -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div class="flex items-center space-x-2">
+                <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">AI Rx Safety & Interaction Checker</h3>
+                  <p class="text-xs text-slate-500">Cross-checks patient conditions (CKD, HTN, T2D) for organ toxicities</p>
+                </div>
+              </div>
+              <span id="rx-safety-score-pill" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">Safety Check Ready</span>
+            </div>
+
+            <!-- Quick Drug Presets -->
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="setRxCheck('Metformin', '1000mg BD')" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-700 cursor-pointer">Metformin 1g</button>
+              <button onclick="setRxCheck('Telmisartan + Ramipril', '40mg + 5mg')" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 px-2 py-0.5 rounded cursor-pointer">Telmisartan+Ramipril (Dual RAS)</button>
+              <button onclick="setRxCheck('Amlodipine', '10mg OD')" class="text-[11px] bg-teal-50 hover:bg-teal-100 text-teal-800 px-2 py-0.5 rounded cursor-pointer">Amlodipine 10mg</button>
+              <button onclick="setRxCheck('Ibuprofen', '400mg TDS')" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-700 cursor-pointer">Ibuprofen (NSAID)</button>
+            </div>
+
+            <!-- Input fields -->
+            <div class="grid grid-cols-3 gap-2">
+              <div class="col-span-2">
+                <span class="text-[11px] font-semibold text-slate-600">Medication to Evaluate</span>
+                <input type="text" id="rx-check-drug" placeholder="e.g. Metformin or Ramipril" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none mt-0.5">
+              </div>
+              <div>
+                <span class="text-[11px] font-semibold text-slate-600">Dosage</span>
+                <input type="text" id="rx-check-dose" placeholder="e.g. 500mg BD" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none mt-0.5">
+              </div>
+            </div>
+
+            <!-- Safety Result Box -->
+            <div id="rx-check-result" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5 max-h-40 overflow-y-auto">
+              <p class="text-slate-500 italic">Enter a proposed medication to run algorithmic & Gemini safety verification.</p>
+            </div>
+          </div>
+
+          <button onclick="runMedicationCheck()" id="btn-run-rx-check" class="w-full py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer">
+            <i data-lucide="check-shield" class="w-3.5 h-3.5"></i>
+            <span>Check Drug-Disease Interactions</span>
+          </button>
+        </div>
+
+      </div>
+
       <!-- Bottom: Patient's Active Care Tasks & Flags History -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
@@ -508,7 +625,76 @@
   </main>
 
   <!-- ============================================== -->
-  <!-- MODAL 1: ADD PATIENT ONBOARDING -->
+  <!-- MODAL: MULTIMODAL TELEMETRY SCANNER (FEATURE 4) -->
+  <!-- ============================================== -->
+  <div id="scan-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Multimodal AI Telemetry & Rx Scanner</h3>
+            <p class="text-xs text-slate-500">Gemini 3.8 Flash Vision extracts numbers from LCD screens & slips</p>
+          </div>
+        </div>
+        <button onclick="closeScanModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick Sample Buttons -->
+      <div>
+        <span class="block text-[11px] font-semibold text-slate-600 mb-1">Select a Demonstration Sample:</span>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="loadScanPreset('bp_monitor')" class="p-2 rounded-lg border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left text-xs font-semibold text-purple-900 cursor-pointer transition-colors">
+            <span class="block font-bold">BP Monitor LCD</span>
+            <span class="text-[10px] text-purple-600">Omron 156/96 mmHg</span>
+          </button>
+          <button type="button" onclick="loadScanPreset('glucometer')" class="p-2 rounded-lg border border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-left text-xs font-semibold text-amber-900 cursor-pointer transition-colors">
+            <span class="block font-bold">Glucometer LCD</span>
+            <span class="text-[10px] text-amber-600">Accu-Chek 142 mg/dL</span>
+          </button>
+          <button type="button" onclick="loadScanPreset('prescription')" class="p-2 rounded-lg border border-teal-200 bg-teal-50/60 hover:bg-teal-100 text-left text-xs font-semibold text-teal-900 cursor-pointer transition-colors">
+            <span class="block font-bold">OPD Rx Slip</span>
+            <span class="text-[10px] text-teal-600">Amlodipine 10mg OD</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- File upload or photo -->
+      <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-xs space-y-2 bg-slate-50/50">
+        <i data-lucide="upload-cloud" class="w-7 h-7 text-slate-400 mx-auto"></i>
+        <div class="text-slate-600 font-medium">Or upload custom monitor photograph</div>
+        <input type="file" id="scan-file-input" accept="image/*" onchange="handleScanFileUpload(event)" class="text-xs text-slate-500 mx-auto block cursor-pointer">
+      </div>
+
+      <!-- Scan Result Output Card -->
+      <div id="scan-result-card" class="hidden p-4 rounded-xl border border-purple-200 bg-purple-50/40 text-xs space-y-2">
+        <div class="flex items-center justify-between">
+          <span id="scan-detected-badge" class="font-bold text-purple-900 uppercase text-[10px] bg-purple-200 px-2 py-0.5 rounded">DETECTED</span>
+          <span id="scan-confidence" class="text-[11px] font-semibold text-purple-700">Confidence: 96%</span>
+        </div>
+        <div id="scan-extracted-vitals" class="font-mono text-base font-extrabold text-slate-900">
+          <!-- e.g. BP 156 / 96 mmHg • Pulse 74 bpm -->
+        </div>
+        <p id="scan-interpretation" class="text-slate-700 leading-relaxed"></p>
+        
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button onclick="commitScannedReading()" id="btn-save-scanned" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-2xs cursor-pointer flex items-center space-x-1">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Commit to Patient Vitals</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD PATIENT ONBOARDING -->
   <!-- ============================================== -->
   <div id="add-patient-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl border border-slate-200 space-y-4">
@@ -530,7 +716,6 @@
 
       <form id="add-patient-form" onsubmit="submitAddPatient(event)" class="space-y-4 text-xs">
         
-        <!-- Name & Age -->
         <div class="grid grid-cols-3 gap-3">
           <div class="col-span-2">
             <label class="block font-semibold text-slate-700 mb-1">Full Name *</label>
@@ -542,7 +727,6 @@
           </div>
         </div>
 
-        <!-- Preferred Language -->
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Preferred Language for Voice & Reminders</label>
           <select id="new-patient-lang" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none text-xs">
@@ -555,7 +739,6 @@
           </select>
         </div>
 
-        <!-- Chronic Conditions Checkboxes -->
         <div>
           <label class="block font-semibold text-slate-700 mb-1.5">Primary Chronic Conditions (Select all that apply) *</label>
           <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
@@ -578,7 +761,6 @@
           </div>
         </div>
 
-        <!-- Initial Intake Baseline Vitals (Optional) -->
         <div class="border-t border-slate-100 pt-3">
           <label class="block font-semibold text-slate-700 mb-1">Baseline Intake Vitals (Optional)</label>
           <div class="grid grid-cols-3 gap-2">
@@ -597,7 +779,6 @@
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="pt-2 flex items-center justify-end space-x-2">
           <button type="button" onclick="closeAddPatientModal()" class="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold transition-colors cursor-pointer">
             Cancel
@@ -613,7 +794,7 @@
   </div>
 
   <!-- ============================================== -->
-  <!-- MODAL 2: RESOLVE TRIAGE FLAG -->
+  <!-- MODAL: RESOLVE TRIAGE FLAG -->
   <!-- ============================================== -->
   <div id="resolve-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl border border-slate-200 space-y-4">
@@ -639,7 +820,7 @@
   </div>
 
   <!-- ============================================== -->
-  <!-- MODAL 3: PRINTABLE DIGITAL OPD PRESCRIPTION SLIP -->
+  <!-- MODAL: PRINTABLE DIGITAL OPD PRESCRIPTION SLIP -->
   <!-- ============================================== -->
   <div id="prescription-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
@@ -756,9 +937,9 @@
     let selectedPatientId = "patient-003";
     let pendingFlagToResolve = null;
     let vitalsChartInstance = null;
+    let lastScannedTelemetry = null;
 
     async function init() {
-      // Check query param for initial patient
       const urlParams = new URLSearchParams(window.location.search);
       const urlPatient = urlParams.get("patient_id");
       if (urlPatient) selectedPatientId = urlPatient;
@@ -785,22 +966,11 @@
         clinicTasks = await tRes.json();
         clinicReadings = await rRes.json();
 
-        // Update Header Picker
         renderHeaderPatientPicker();
-
-        // Update KPIs
         updateKPIs();
-
-        // Render Overview tab
         renderOverview();
-
-        // Render Triage tab
         renderTriageQueue();
-
-        // Render Directory tab
         renderDirectory();
-
-        // Render Active Chart
         renderPatientChart(selectedPatientId);
 
       } catch (err) {
@@ -1070,17 +1240,17 @@
       document.getElementById("chart-patient-meta").innerText = `${p.age || 58} Yrs • ${p.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ')} • Preferred Language: ${p.preferred_language === 'hi' ? 'Hindi' : 'English'}`;
       document.getElementById("chart-view-patient-portal").href = `/patient?patient_id=${p.id}`;
 
-      // 1. Render Longitudinal Chart.js
       renderVitalsChart(p.id);
-
-      // 2. Fetch AI Clinical Summary
       loadAiSummary(p.id);
-
-      // 3. Render Patient Care Tasks
       renderPatientTasks(p.id);
-
-      // 4. Render Patient Flags
       renderPatientChartFlags(p.id);
+      
+      // Reset copilot & rx check for new patient
+      document.getElementById("doctor-copilot-output").innerHTML = `<p class="text-slate-500 italic">Select a clinical inquiry chip above or ask a tailored question for ${p.display_name}...</p>`;
+      document.getElementById("doctor-copilot-citations").classList.add("hidden");
+      document.getElementById("rx-check-result").innerHTML = `<p class="text-slate-500 italic">Enter a proposed medication to run algorithmic & Gemini safety verification for ${p.display_name}.</p>`;
+      document.getElementById("rx-safety-score-pill").innerText = "Safety Check Ready";
+      document.getElementById("rx-safety-score-pill").className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700";
     }
 
     function renderVitalsChart(pid) {
@@ -1284,6 +1454,294 @@
     }
 
     // ==============================================
+    // FEATURE 1: ASK SWASTHYA AI CLINICAL COPILOT
+    // ==============================================
+    function setCopilotQuery(q) {
+      document.getElementById("doctor-copilot-input").value = q;
+      submitDoctorCopilot();
+    }
+
+    async function submitDoctorCopilot(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById("doctor-copilot-input");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const output = document.getElementById("doctor-copilot-output");
+      const citations = document.getElementById("doctor-copilot-citations");
+      const submitBtn = document.getElementById("btn-doctor-copilot");
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Consulting...";
+      output.innerHTML = `
+        <div class="flex items-center space-x-2 text-teal-700 py-2">
+          <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+          <span>Synthesizing guidance with Gemini 3.8 Flash & Clinical Guidelines...</span>
+        </div>
+      `;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch("/api/ai/copilot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            patient_id: selectedPatientId,
+            user_role: "doctor",
+            message: msg,
+            language: "en"
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          output.innerHTML = `<div class="text-slate-800 whitespace-pre-line">${data.reply}</div>`;
+          
+          if (data.citations && data.citations.length > 0) {
+            citations.innerHTML = `📚 <strong>Guidelines Grounding:</strong> ${data.citations.join(" • ")}`;
+            citations.classList.remove("hidden");
+          }
+        } else {
+          output.innerHTML = `<p class="text-rose-600">Error retrieving copilot guidance. Please re-try.</p>`;
+        }
+      } catch (err) {
+        console.error("Copilot error:", err);
+        output.innerHTML = `<p class="text-rose-600">Network connection issue.</p>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i><span>Consult</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // ==============================================
+    // FEATURE 3: AI SMART RX INTERACTION & SAFETY CHECKER
+    // ==============================================
+    function setRxCheck(drug, dose) {
+      document.getElementById("rx-check-drug").value = drug;
+      document.getElementById("rx-check-dose").value = dose;
+      runMedicationCheck();
+    }
+
+    async function runMedicationCheck() {
+      const drug = document.getElementById("rx-check-drug").value.trim();
+      const dose = document.getElementById("rx-check-dose").value.trim();
+      if (!drug) {
+        showToast("Please enter a medication name", "error");
+        return;
+      }
+
+      const resultBox = document.getElementById("rx-check-result");
+      const scorePill = document.getElementById("rx-safety-score-pill");
+      const btn = document.getElementById("btn-run-rx-check");
+
+      btn.disabled = true;
+      btn.innerText = "Analyzing Safety...";
+      resultBox.innerHTML = `<div class="p-2 text-slate-500">Checking drug-disease contraindications...</div>`;
+
+      try {
+        const res = await fetch("/api/ai/medication-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            patient_id: selectedPatientId,
+            medication_name: drug,
+            dosage: dose
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          
+          // Badge colors
+          if (data.status === "safe") {
+            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+            scorePill.innerText = `Score: ${data.safety_score}/100 • SAFE`;
+          } else if (data.status === "warning") {
+            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+            scorePill.innerText = `Score: ${data.safety_score}/100 • CAUTION`;
+          } else {
+            scorePill.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 animate-pulse";
+            scorePill.innerText = `Score: ${data.safety_score}/100 • CONTRAINDICATED`;
+          }
+
+          let html = `<div>${data.summary}</div>`;
+          if (data.contraindications.length > 0) {
+            html += `<div class="p-2 bg-rose-100/70 border border-rose-300 rounded text-rose-900 font-semibold mt-1">🚨 <strong>Contraindication:</strong> ${data.contraindications.join('<br>')}</div>`;
+          }
+          if (data.warnings.length > 0) {
+            html += `<div class="p-2 bg-amber-100/70 border border-amber-300 rounded text-amber-900 font-medium mt-1">⚠️ <strong>Clinical Warning:</strong> ${data.warnings.join('<br>')}</div>`;
+          }
+          html += `<div class="text-teal-800 font-semibold mt-1">💡 <strong>Guideline Recommendation:</strong> ${data.guideline_recommendation}</div>`;
+          html += `<div class="text-[10px] text-slate-400 mt-1">Evidence: ${data.evidence_source}</div>`;
+
+          resultBox.innerHTML = html;
+        } else {
+          resultBox.innerHTML = `<p class="text-rose-600">Failed to evaluate medication.</p>`;
+        }
+      } catch (err) {
+        console.error("Medication check error:", err);
+        resultBox.innerHTML = `<p class="text-rose-600">Network connection issue.</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check-shield" class="w-3.5 h-3.5"></i><span>Check Drug-Disease Interactions</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // ==============================================
+    // FEATURE 4: MULTIMODAL TELEMETRY SCANNER
+    // ==============================================
+    function openScanModal() {
+      document.getElementById("scan-modal").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function closeScanModal() {
+      document.getElementById("scan-modal").classList.add("hidden");
+    }
+
+    async function loadScanPreset(deviceHint) {
+      const card = document.getElementById("scan-result-card");
+      card.classList.remove("hidden");
+      document.getElementById("scan-extracted-vitals").innerHTML = `<span class="text-purple-600 animate-pulse">Scanning monitor display with Gemini 3.8 Flash Vision...</span>`;
+      
+      try {
+        const res = await fetch("/api/ai/scan-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: "",
+            device_hint: deviceHint,
+            patient_id: selectedPatientId
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          lastScannedTelemetry = data;
+          
+          document.getElementById("scan-detected-badge").innerText = data.detected_device.replace(/_/g, ' ');
+          document.getElementById("scan-confidence").innerText = `Confidence: ${(data.confidence * 100).toFixed(0)}%`;
+          
+          if (data.reading_type === "blood_pressure") {
+            document.getElementById("scan-extracted-vitals").innerHTML = `SYS: <span class="text-rose-600">${data.systolic_mmhg}</span> mmHg / DIA: <span class="text-teal-700">${data.diastolic_mmhg}</span> mmHg • Pulse: ${data.pulse_bpm} bpm`;
+          } else if (data.reading_type === "blood_glucose") {
+            document.getElementById("scan-extracted-vitals").innerHTML = `Blood Glucose: <span class="text-amber-600">${data.glucose_value}</span> mg/dL (${data.glucose_context})`;
+          } else {
+            document.getElementById("scan-extracted-vitals").innerHTML = `Extracted Rx: ${data.medications_extracted.join(", ")}`;
+          }
+
+          document.getElementById("scan-interpretation").innerText = data.clinical_interpretation;
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error("Scan error:", err);
+      }
+    }
+
+    function handleScanFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+        const card = document.getElementById("scan-result-card");
+        card.classList.remove("hidden");
+        document.getElementById("scan-extracted-vitals").innerHTML = `<span class="text-purple-600 animate-pulse">Processing uploaded image via Gemini 3.8 Flash Vision...</span>`;
+
+        try {
+          const res = await fetch("/api/ai/scan-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image_base64: base64,
+              device_hint: "auto",
+              patient_id: selectedPatientId
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            lastScannedTelemetry = data;
+            
+            document.getElementById("scan-detected-badge").innerText = data.detected_device.replace(/_/g, ' ');
+            document.getElementById("scan-confidence").innerText = `Confidence: ${(data.confidence * 100).toFixed(0)}%`;
+            
+            if (data.reading_type === "blood_pressure") {
+              document.getElementById("scan-extracted-vitals").innerHTML = `SYS: <span class="text-rose-600">${data.systolic_mmhg}</span> mmHg / DIA: <span class="text-teal-700">${data.diastolic_mmhg}</span> mmHg • Pulse: ${data.pulse_bpm || '--'} bpm`;
+            } else if (data.reading_type === "blood_glucose") {
+              document.getElementById("scan-extracted-vitals").innerHTML = `Blood Glucose: <span class="text-amber-600">${data.glucose_value}</span> mg/dL`;
+            } else {
+              document.getElementById("scan-extracted-vitals").innerHTML = `Raw OCR: ${data.raw_text}`;
+            }
+
+            document.getElementById("scan-interpretation").innerText = data.clinical_interpretation;
+            lucide.createIcons();
+          }
+        } catch (err) {
+          console.error("Custom scan upload error:", err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function commitScannedReading() {
+      if (!lastScannedTelemetry) return;
+      const data = lastScannedTelemetry;
+      const btn = document.getElementById("btn-save-scanned");
+      btn.disabled = true;
+      btn.innerText = "Committing...";
+
+      try {
+        let payload = null;
+        if (data.reading_type === "blood_pressure" && data.systolic_mmhg) {
+          payload = {
+            type: "blood_pressure",
+            recorded_at: new Date().toISOString(),
+            systolic_mmhg: data.systolic_mmhg,
+            diastolic_mmhg: data.diastolic_mmhg,
+            unit: "mmHg",
+            context: "home_monitor_scan"
+          };
+        } else if (data.reading_type === "blood_glucose" && data.glucose_value) {
+          payload = {
+            type: "blood_glucose",
+            recorded_at: new Date().toISOString(),
+            value: data.glucose_value,
+            unit: "mg/dL",
+            context: data.glucose_context || "fasting"
+          };
+        }
+
+        if (payload) {
+          const res = await fetch(`/api/patients/${selectedPatientId}/readings`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            closeScanModal();
+            showToast("✓ Scanned reading committed to patient chart!");
+            await refreshData();
+          }
+        } else {
+          showToast("Scanned document did not contain numerical vitals to commit.", "info");
+          closeScanModal();
+        }
+      } catch (err) {
+        console.error("Commit reading error:", err);
+        showToast("Error saving reading", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Commit to Patient Vitals</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // ==============================================
     // ONBOARDING: ADD PATIENT MODAL
     // ==============================================
     function openAddPatientModal() {
@@ -1339,7 +1797,6 @@
           showToast(`✓ Patient ${newPatient.display_name} successfully enrolled!`);
           document.getElementById("add-patient-form").reset();
           
-          // Refresh and automatically inspect the newly created patient
           await refreshData();
           inspectPatientChart(newPatient.id);
         } else {
@@ -1383,25 +1840,21 @@
       const noteInput = document.getElementById("resolve-note-input");
       const note = noteInput ? noteInput.value.trim() : "";
 
-      // 1. Instantly close modal & show optimistic toast
       closeResolveModal();
       if (noteInput) noteInput.value = "";
       showToast("✓ Clinical triage flag resolved!");
 
-      // 2. Optimistically update in-memory model
       const targetFlag = clinicFlags.find(f => f.id === flagId);
       if (targetFlag) {
         targetFlag.status = "resolved";
         targetFlag.resolution_note = note || "Resolved by clinical coordinator";
       }
 
-      // 3. Immediately re-render active UI views
       updateKPIs();
       renderOverview();
       renderTriageQueue();
       if (selectedPatientId) renderPatientChartFlags(selectedPatientId);
 
-      // 4. Dispatch background API call
       try {
         await fetch(`/api/triage-flags/${flagId}/resolve`, {
           method: "POST",

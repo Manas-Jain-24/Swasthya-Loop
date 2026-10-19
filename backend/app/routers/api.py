@@ -19,7 +19,14 @@ from ..schemas import (
     CoordinatorOverviewItem,
     SummaryRequest,
     SummaryResponse,
+    CopilotMessageRequest,
+    CopilotMessageResponse,
+    MedicationCheckRequest,
+    MedicationCheckResponse,
+    ScanImageRequest,
+    ScanImageResponse,
 )
+from ..services.ai_copilot import ask_clinical_copilot, check_medication_safety, scan_multimodal_telemetry_image
 from ..services.rules import evaluate_patient_tasks_and_rules
 from ..services.summaries import generate_patient_summary
 
@@ -335,3 +342,38 @@ def set_gemini_key(req: GeminiKeyRequest):
         "model": "gemini-3.8-flash"
     }
 
+
+
+# =====================================================================
+# AI Copilot, Medication Safety & Multimodal Telemetry OCR Endpoints
+# =====================================================================
+@router.get("/summary/{patient_id}")
+def get_patient_summary_get(patient_id: str, db: Session = Depends(get_db)):
+    return generate_patient_summary(db, patient_id)
+
+@router.post("/ai/copilot", response_model=CopilotMessageResponse)
+def ai_copilot_endpoint(req: CopilotMessageRequest, db: Session = Depends(get_db)):
+    return ask_clinical_copilot(
+        db=db,
+        patient_id=req.patient_id,
+        user_role=req.user_role,
+        message=req.message,
+        language=req.language
+    )
+
+@router.post("/ai/medication-check", response_model=MedicationCheckResponse)
+def ai_medication_check_endpoint(req: MedicationCheckRequest, db: Session = Depends(get_db)):
+    return check_medication_safety(
+        db=db,
+        patient_id=req.patient_id,
+        medication_name=req.medication_name,
+        dosage=req.dosage
+    )
+
+@router.post("/ai/scan-image", response_model=ScanImageResponse)
+def ai_scan_image_endpoint(req: ScanImageRequest):
+    return scan_multimodal_telemetry_image(
+        image_base64=req.image_base64,
+        device_hint=req.device_hint,
+        patient_id=req.patient_id
+    )

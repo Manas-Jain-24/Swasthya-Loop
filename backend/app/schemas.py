@@ -141,3 +141,55 @@ class SummaryResponse(BaseModel):
     is_ai_generated: bool
     fallback_used: bool
     safety_disclaimer: str
+
+
+# =====================================================================
+# AI Copilot, Medication Safety & Multimodal Scanner Schemas
+# =====================================================================
+class CopilotMessageRequest(BaseModel):
+    patient_id: str
+    user_role: str = "doctor" # "doctor" or "patient"
+    message: str
+    language: str = "en" # "en" or "hi"
+
+class CopilotMessageResponse(BaseModel):
+    reply: str
+    audio_text: Optional[str] = None
+    is_emergency: bool = False
+    citations: List[str] = []
+    suggested_actions: List[str] = []
+    source: str = "gemini-3.8-flash"
+
+class MedicationCheckRequest(BaseModel):
+    patient_id: str
+    medication_name: str
+    dosage: Optional[str] = ""
+
+class MedicationCheckResponse(BaseModel):
+    medication_name: str
+    dosage: Optional[str] = ""
+    status: str # "safe", "warning", "contraindicated"
+    safety_score: int
+    summary: str
+    contraindications: List[str] = []
+    warnings: List[str] = []
+    guideline_recommendation: str
+    evidence_source: str
+
+class ScanImageRequest(BaseModel):
+    image_base64: str
+    device_hint: Optional[str] = "auto"
+    patient_id: Optional[str] = None
+
+class ScanImageResponse(BaseModel):
+    detected_device: str
+    reading_type: str
+    systolic_mmhg: Optional[float] = None
+    diastolic_mmhg: Optional[float] = None
+    pulse_bpm: Optional[float] = None
+    glucose_value: Optional[float] = None
+    glucose_context: Optional[str] = "fasting"
+    medications_extracted: List[str] = []
+    confidence: float
+    clinical_interpretation: str
+    raw_text: str
