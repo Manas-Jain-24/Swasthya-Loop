@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import Base, engine, SessionLocal
 from app.seed.demo_data import seed_database
+from app.models import Reading, FollowupFlag
 
 client = TestClient(app)
 
@@ -133,7 +134,7 @@ def test_ai_medication_check_safe():
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] in ["safe", "warning", "contraindicated"]
+    assert data["status"] in ["safe", "warning", "contraindicated", "manual_review_needed"]
     assert "safety_score" in data
 
 # -------------------------------------------------------------
@@ -238,3 +239,112 @@ def test_clinical_cohorts_meta():
     assert len(data["telemetry_architecture"]) >= 3
     assert "patient-003" in data["cohorts"]
     assert "30-day post-discharge" in data["cohorts"]["patient-003"]["cohort_name"].lower()
+
+
+def test_three_unverified_readings_do_not_create_trend_alert():
+    """
+    Requirement 4 & 6: Three unverified/manual readings must NOT create BP_TREND_UP_3 alert.
+    Only allowed verified sources trigger BP_TREND_UP_3.
+    """
+    db = SessionLocal()
+    try:
+        # Clear existing readings & flags for patient-002
+        db.query(Reading).filter(Reading.patient_id == "patient-002").delete()
+        db.query(FollowupFlag).filter(FollowupFlag.patient_id == "patient-002").delete()
+        db.commit()
+
+        # Add 3 rising BP readings with UNVERIFIED source
+        db.add(Reading(
+            id="read-unv-1", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=138.0, diastolic_mmhg=86.0,
+            recorded_at="2026-10-12T08:00:00+05:30",
+            source="Manual patient entry"
+        ))
+        db.add(Reading(
+            id="read-unv-2", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=148.0, diastolic_mmhg=90.0,
+            recorded_at="2026-10-14T08:00:00+05:30",
+            source="Manual patient entry"
+        ))
+        db.add(Reading(
+            id="read-unv-3", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=162.0, diastolic_mmhg=96.0,
+            recorded_at="2026-10-16T08:00:00+05:30",
+            source="Manual patient entry"
+        ))
+        db.commit()
+
+        # Evaluate rules
+        from app.services.rules import evaluate_patient_tasks_and_rules
+        flags = evaluate_patient_tasks_and_rules(db, "patient-002")
+        trend_flags = [f for f in flags if f.source_rule_id == "BP_TREND_UP_3" or f.reason_code == "BP_TREND_UP_3"]
+        assert len(trend_flags) == 0, "Unverified/manual readings should NOT trigger BP_TREND_UP_3 alert!"
+    finally:
+        db.close()
+
+def test_ai_handoff_built_from_current_database_readings():
+    """
+    Requirement 5 & 6: AI handoff is dynamically calculated from actual stored database readings.
+    """
+    db = SessionLocal()
+    try:
+        db.query(Reading).filter(Reading.patient_id == "patient-002").delete()
+        db.query(FollowupFlag).filter(FollowupFlag.patient_id == "patient-002").delete()
+        db.commit()
+
+        # Add 3 custom verified readings: 132/84 -> 144/88 -> 158/92 across 4 days
+        db.add(Reading(
+            id="read-dyn-1", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=132.0, diastolic_mmhg=84.0,
+            recorded_at="2026-10-10T08:00:00+05:30",
+            source="Device photo, patient-confirmed"
+        ))
+        db.add(Reading(
+            id="read-dyn-2", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=144.0, diastolic_mmhg=88.0,
+            recorded_at="2026-10-12T08:00:00+05:30",
+            source="Bluetooth cuff"
+        ))
+        db.add(Reading(
+            id="read-dyn-3", patient_id="patient-002", type="blood_pressure",
+            systolic_mmhg=158.0, diastolic_mmhg=92.0,
+            recorded_at="2026-10-14T08:00:00+05:30",
+            source="Caregiver/ASHA-assisted entry"
+        ))
+        db.commit()
+
+        from app.services.ai_copilot import ask_clinical_copilot
+        res = ask_clinical_copilot(db, "patient-002", user_role="doctor", message="handoff")
+        reply = res["reply"]
+        assert "132/84" in reply
+        assert "158/92" in reply
+        assert "titrate" not in reply.lower()
+        assert "prescribe" not in reply.lower()
+    finally:
+        db.close()
+
+def test_no_patient_or_doctor_ui_fallback_includes_medication_or_titration():
+    """
+    Requirement 1 & 6: Doctor and patient UI must NOT contain hard-coded medication dosages,
+    prescriptions, titration guidance, or deceptive certification claims.
+    """
+    import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    doc_path = os.path.join(base_dir, "app", "static", "doctor.html")
+    pat_path = os.path.join(base_dir, "app", "static", "patient.html")
+
+    with open(doc_path, "r", encoding="utf-8") as f:
+        doc_content = f.read().lower()
+
+    with open(pat_path, "r", encoding="utf-8") as f:
+        pat_content = f.read().lower()
+
+    # Forbidden claims
+    assert "abdm verified" not in doc_content
+    assert "digitally verified" not in pat_content
+    assert "digitally signed" not in doc_content
+    assert "amlodipine 10mg" not in doc_content
+    assert "amlodipine 10mg" not in pat_content
+    assert "dose titration" not in doc_content
+    assert "dose titration" not in pat_content
+    assert "setrxcheck" not in doc_content

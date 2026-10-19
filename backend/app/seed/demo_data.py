@@ -667,7 +667,7 @@ def seed_database(db: Session):
             priority="urgent",
             reason_code="MULTIMORBID_DUAL_CRISIS",
             reason="Concurrent Stage 2 Hypertension (164/98 mmHg) and uncontrolled fasting hyperglycemia (210 mg/dL).",
-            recommended_action="Urgent cardio-metabolic review. Schedule comprehensive renal panel and titrate dual therapies.",
+            recommended_action="Urgent cardio-metabolic review. Schedule comprehensive renal panel and evaluate clinical therapy.",
             source_rule_id="rule-bp-elevated-v1",
             status="open",
             created_at="2026-10-18T08:30:00+05:30",

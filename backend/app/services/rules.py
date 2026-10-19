@@ -135,11 +135,23 @@ def evaluate_patient_tasks_and_rules(db: Session, patient_id: str) -> List[Follo
                         created_or_active_flags.append(latest_flag)
 
     # 3. Evaluate Longitudinal Clinical Trajectories (HERO RULE: BP_TREND_UP_3)
-    bp_readings = [r for r in recent_readings if r.type == "blood_pressure" and r.systolic_mmhg is not None]
-    if len(bp_readings) >= 3:
-        r1 = bp_readings[0]  # newest reading
-        r2 = bp_readings[1]  # middle reading
-        r3 = bp_readings[2]  # oldest reading
+    # Strictly source-verified: ONLY allowed verified sources trigger BP_TREND_UP_3
+    VERIFIED_BP_SOURCES = {
+        "Device photo, patient-confirmed",
+        "Bluetooth cuff",
+        "Caregiver/ASHA-assisted entry",
+        "Pharmacy/sub-centre entry"
+    }
+    verified_bp_readings = [
+        r for r in recent_readings 
+        if r.type == "blood_pressure" 
+        and r.systolic_mmhg is not None 
+        and r.source in VERIFIED_BP_SOURCES
+    ]
+    if len(verified_bp_readings) >= 3:
+        r1 = verified_bp_readings[0]  # newest reading
+        r2 = verified_bp_readings[1]  # middle reading
+        r3 = verified_bp_readings[2]  # oldest reading
 
         # Detect strictly upward trajectory across 3 readings with delta >= 6 mmHg
         if (r3.systolic_mmhg < r2.systolic_mmhg < r1.systolic_mmhg) and (r1.systolic_mmhg - r3.systolic_mmhg >= 6):

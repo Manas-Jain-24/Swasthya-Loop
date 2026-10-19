@@ -43,13 +43,13 @@ COHORT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "cohort_name": "30-day post-discharge monitoring for cardiac patients after a new or adjusted BP medication",
         "cohort_badge": "Day 15 of 30",
         "badge_color": "amber",
-        "indication": "Post-Discharge Cardiac & Renal Follow-Up (Baseline eGFR 42 mL/min)",
+        "indication": "Post-Discharge Cardiac & Renal Follow-Up (Day 14 of 30)",
         "enrollment_day": 15,
         "duration_days": 30,
         "exit_milestone": "Stable trajectory or scheduled clinician review",
         "telemetry_source": "Caregiver/ASHA-assisted entry",
         "active_rx": ["Tab. Metformin 500mg BID", "Tab. Telmisartan 40mg OD"],
-        "open_clinical_question": "Renal safety and glycemic monitoring alongside BP medication adjustment."
+        "open_clinical_question": "Monitoring BP trajectory alongside glycemic stability."
     },
     "patient-004": {
         "cohort_name": "30-day post-discharge monitoring for cardiac patients after a new or adjusted BP medication",

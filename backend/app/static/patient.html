@@ -141,10 +141,10 @@
           <i data-lucide="file-text" class="w-6 h-6"></i>
         </div>
         <div>
-          <h3 class="text-sm font-bold text-slate-900 group-hover:text-purple-700 transition-colors">My Clinical Prescription Slip</h3>
-          <p class="text-xs text-slate-500 mt-0.5">View medicines, doctor notes & print official PDF</p>
+          <h3 class="text-sm font-bold text-slate-900 group-hover:text-purple-700 transition-colors">30-Day Discharge Follow-Up Plan</h3>
+          <p class="text-xs text-slate-500 mt-0.5">View monitoring schedule, protocol reminders & clinical review date</p>
           <span class="inline-flex items-center space-x-1 text-xs font-semibold text-purple-700 mt-2">
-            <span>View OPD Slip</span>
+            <span>View Plan & Schedule</span>
             <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
           </span>
         </div>
@@ -465,14 +465,14 @@
         </div>
 
         <div class="text-xs space-y-2">
-          <div class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Doctor's Prescription & Treatment Plan (Rx)</div>
+          <div class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Doctor's Discharge Regimen & Care Plan Actions</div>
           <div id="slip-orders" class="bg-teal-50/50 border border-teal-200 rounded-lg p-3 space-y-1.5 text-slate-800">
             <!-- populated -->
           </div>
         </div>
 
         <div class="pt-4 border-t border-slate-200 flex justify-between items-end text-[11px] text-slate-500">
-          <div>Digitally verified via ABDM Health Record Gateway.</div>
+          <div>Prototype &bull; simulated/de-identified demo data (FHIR-ready prototype).</div>
           <div class="text-right italic font-serif text-sm text-slate-800">Dr. Ananya Sen</div>
         </div>
       </div>
@@ -637,22 +637,20 @@
       const p = patientsList.find(item => item.id === currentPatientId);
       const name = p ? p.display_name : "Patient";
       const textEl = document.getElementById("patient-briefing-text");
-
       if (currentLanguage === "hi") {
         if (currentPatientId === "patient-003") {
-          textEl.innerText = `नमस्ते ${name} जी! आपके रक्तचाप की निगरानी से पता चला है कि हाल ही में बीपी 168/104 तक बढ़ा था। डॉक्टर ने आपकी रात की दवा एम्लोडिपिन 10mg शुरू की है। कृपया खाने में नमक कम रखें और कल सुबह 8 बजे अपना बीपी मापकर दर्ज करें।`;
+          textEl.innerText = `नमस्ते ${name} जी! आप अपने 30-दिवसीय पोस्ट-डिस्चार्ज कार्डियक फॉलो-अप के 12वें दिन पर हैं। कृपया अपना निर्धारित रक्तचाप मापें। यदि सीने में दर्द या सांस लेने में गंभीर तकलीफ हो, तो तुरंत आपातकालीन चिकित्सा सहायता लें।`;
         } else {
-          textEl.innerText = `नमस्ते ${name} जी! आपकी नियमित स्वास्थ्य देखभाल योजना सक्रिय है। अपनी निर्धारित दवाएं समय पर लें और आज का माप दर्ज करें।`;
+          textEl.innerText = `नमस्ते ${name} जी! आप अपने 30-दिवसीय पोस्ट-डिस्चार्ज फॉलो-अप पर हैं। कृपया अपने दैनिक स्वास्थ्य मापों को निर्धारित समय पर दर्ज करें।`;
         }
       } else {
         if (currentPatientId === "patient-003") {
-          textEl.innerText = `Hello ${name}! Your recent telemetry indicates a systolic surge to 168 mmHg. Your care team has adjusted your prescription to Amlodipine 10mg OD after dinner. Please restrict dietary sodium and record your resting blood pressure tomorrow morning.`;
+          textEl.innerText = `Hello ${name}! You are on Day 12 of your 30-day post-discharge cardiac follow-up. Please log your verified resting blood pressure reading as scheduled. If you experience chest pain, severe shortness of breath, or emergency symptoms, seek immediate emergency medical care.`;
         } else {
-          textEl.innerText = `Hello ${name}! Your chronic care trajectory is stable. Please continue your daily prescribed medication and log your scheduled readings.`;
+          textEl.innerText = `Hello ${name}! You are on your 30-day post-discharge monitoring plan. Please continue to log your scheduled verified telemetry readings.`;
         }
       }
     }
-
     function toggleAudio() {
       if (isAudioPlaying) {
         window.speechSynthesis.cancel();
@@ -980,26 +978,18 @@
       const orders = document.getElementById("slip-orders");
       if (p.id === "patient-003") {
         orders.innerHTML = `
-          <div>• <strong>Rx Adjustment:</strong> Tab. Amlodipine 10mg OD (Take 1 tablet after dinner with warm water).</div>
-          <div>• <strong>Dietary Restriction:</strong> Strict dietary sodium restriction (&lt; 2.0g/day). Avoid pickles and papad.</div>
-          <div>• <strong>Telemetry Schedule:</strong> Mandatory repeat resting BP reading tomorrow morning at 08:00 AM.</div>
-          <div>• <strong>Next Review:</strong> Scheduled teleconsultation in 72 hours.</div>
-        `;
-      } else if (p.conditions.includes("type_2_diabetes")) {
-        orders.innerHTML = `
-          <div>• <strong>Rx Orders:</strong> Tab. Metformin 500mg BD after breakfast and dinner.</div>
-          <div>• <strong>Dietary Guidance:</strong> Low glycemic index meals; minimum 30 minutes brisk walk daily.</div>
-          <div>• <strong>Telemetry Schedule:</strong> Log fasting glucose tomorrow morning; log post-lunch reading.</div>
-          <div>• <strong>Next Review:</strong> Regular scheduled follow-up on Oct 26, 2026.</div>
+          <div>&bull; <strong>Assigned Pathway:</strong> 30-Day Post-Discharge Cardiac Care (Day 12 of 30).</div>
+          <div>&bull; <strong>Monitoring Schedule:</strong> Verified resting morning blood pressure reading.</div>
+          <div>&bull; <strong>Care Team Action:</strong> Coordinator outreach scheduled following BP_TREND_UP_3 alert.</div>
+          <div>&bull; <strong>Next Review:</strong> Scheduled clinician consultation in 72 hours.</div>
         `;
       } else {
         orders.innerHTML = `
-          <div>• <strong>Rx Orders:</strong> Continue regular morning prescribed medication with water.</div>
-          <div>• <strong>Routine Follow-up:</strong> Log daily morning blood pressure reading in SwasthyaLoop portal.</div>
-          <div>• <strong>Next Review:</strong> Scheduled OPD visit on Oct 24, 2026.</div>
+          <div>&bull; <strong>Assigned Pathway:</strong> 30-Day Post-Discharge Cardiac Follow-Up.</div>
+          <div>&bull; <strong>Monitoring Schedule:</strong> Daily verified telemetry readings.</div>
+          <div>&bull; <strong>Next Review:</strong> Scheduled outpatient follow-up.</div>
         `;
       }
-
       document.getElementById("patient-slip-modal").classList.remove("hidden");
       lucide.createIcons();
     }

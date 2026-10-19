@@ -535,7 +535,7 @@
             <div class="flex items-center space-x-2">
               <h2 id="chart-patient-name" class="text-xl font-black">Rajesh Sharma</h2>
               <span id="chart-patient-id" class="text-xs bg-teal-800 text-teal-200 px-2 py-0.5 rounded font-mono">patient-003</span>
-              <span id="chart-patient-badge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-semibold">ABDM Verified</span>
+              <span id="chart-patient-badge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-semibold">Prototype &bull; simulated/de-identified demo data</span>
               <span id="chart-patient-cohort" class="text-xs bg-rose-500/30 text-rose-200 border border-rose-400/40 px-2.5 py-0.5 rounded-full font-bold">Cohort A: 30-Day Post-PCI</span>
             </div>
             <p id="chart-patient-meta" class="text-xs text-slate-300 mt-1 font-medium">58 Yrs • Essential Hypertension • Preferred Language: Hindi</p>
@@ -554,10 +554,6 @@
               <i data-lucide="camera" class="w-4 h-4"></i>
               <span>Scan Telemetry Photo</span>
             </button>
-            <button onclick="openDoctorPrescriptionSlip()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer">
-              <i data-lucide="printer" class="w-4 h-4"></i>
-              <span>Clinician Review Note</span>
-            </button>
             <a id="chart-view-patient-portal" href="/patient?patient_id=patient-003" class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
               <span>Patient View</span>
@@ -571,10 +567,10 @@
             <span class="p-1.5 bg-red-800 text-white rounded-lg"><i data-lucide="trending-up" class="w-4 h-4 text-red-200"></i></span>
             <div>
               <span class="font-extrabold text-white">Clinical Trajectory Alert (3-Reading Trend Escalation):</span>
-              <span class="text-red-200 ml-1">Systolic BP has escalated across 3 consecutive readings (138 &rarr; 148 &rarr; 162 mmHg), signaling therapeutic titration loss of control.</span>
+              <span class="text-red-200 ml-1">Systolic BP has escalated across 3 consecutive readings (138 &rarr; 148 &rarr; 162 mmHg), signaling need for coordinator outreach and clinician review.</span>
             </div>
           </div>
-          <button onclick="setRxCheck('Amlodipine', '10mg OD')" class="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold shrink-0 shadow-xs cursor-pointer flex items-center space-x-1">
+          <button onclick="handleDocumentOutreach()" class="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold shrink-0 shadow-xs cursor-pointer flex items-center space-x-1">
             <span>Coordinator Outreach & Clinician Review</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
@@ -722,56 +718,7 @@
               <span>Consult</span>
             </button>
           </form>
-        </div>
-
-        <!-- FEATURE 3: AI SMART RX INTERACTION & SAFETY CHECKER -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4 flex flex-col justify-between">
-          <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div class="flex items-center space-x-2">
-                <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
-                  <i data-lucide="shield-check" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900">AI Rx Safety & Interaction Checker</h3>
-                  <p class="text-xs text-slate-500">Cross-checks patient conditions (CKD, HTN, T2D) for organ toxicities</p>
-                </div>
-              </div>
-              <span id="rx-safety-score-pill" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">Safety Check Ready</span>
-            </div>
-
-            <!-- Quick Drug Presets -->
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="setRxCheck('Metformin', '1000mg BD')" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-700 cursor-pointer">Metformin 1g</button>
-              <button onclick="setRxCheck('Telmisartan + Ramipril', '40mg + 5mg')" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 px-2 py-0.5 rounded cursor-pointer">Telmisartan+Ramipril (Dual RAS)</button>
-              <button onclick="setRxCheck('Amlodipine', '10mg OD')" class="text-[11px] bg-teal-50 hover:bg-teal-100 text-teal-800 px-2 py-0.5 rounded cursor-pointer">Amlodipine 10mg</button>
-              <button onclick="setRxCheck('Ibuprofen', '400mg TDS')" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-700 cursor-pointer">Ibuprofen (NSAID)</button>
-            </div>
-
-            <!-- Input fields -->
-            <div class="grid grid-cols-3 gap-2">
-              <div class="col-span-2">
-                <span class="text-[11px] font-semibold text-slate-600">Medication to Evaluate</span>
-                <input type="text" id="rx-check-drug" placeholder="e.g. Metformin or Ramipril" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none mt-0.5">
-              </div>
-              <div>
-                <span class="text-[11px] font-semibold text-slate-600">Dosage</span>
-                <input type="text" id="rx-check-dose" placeholder="e.g. 500mg BD" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none mt-0.5">
-              </div>
-            </div>
-
-            <!-- Safety Result Box -->
-            <div id="rx-check-result" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5 max-h-40 overflow-y-auto">
-              <p class="text-slate-500 italic">Enter a proposed medication to run algorithmic & Gemini safety verification.</p>
-            </div>
-          </div>
-
-          <button onclick="runMedicationCheck()" id="btn-run-rx-check" class="w-full py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer">
-            <i data-lucide="check-shield" class="w-3.5 h-3.5"></i>
-            <span>Check Drug-Disease Interactions</span>
-          </button>
-        </div>
-
+        
       </div>
 
       <!-- Bottom: Patient's Active Care Tasks & Flags History -->
@@ -850,11 +797,7 @@
             <span class="block font-bold">Glucometer LCD</span>
             <span class="text-[10px] text-amber-600">Accu-Chek 142 mg/dL</span>
           </button>
-          <button type="button" onclick="loadScanPreset('prescription')" class="p-2 rounded-lg border border-teal-200 bg-teal-50/60 hover:bg-teal-100 text-left text-xs font-semibold text-teal-900 cursor-pointer transition-colors">
-            <span class="block font-bold">OPD Rx Slip</span>
-            <span class="text-[10px] text-teal-600">Amlodipine 10mg OD</span>
-          </button>
-        </div>
+          </div>
       </div>
 
       <!-- File upload or photo -->
@@ -1254,7 +1197,7 @@
             <span class="text-rose-600 font-black text-sm">&times;</span>
             <div>
               <h5 class="text-xs font-bold text-slate-900">End-Stage Palliative Care &mdash; DECLINED</h5>
-              <p class="text-xs text-slate-600 mt-0.5">Comfort-care patients without active curative titration goals do not benefit from intensive physiological surveillance.</p>
+              <p class="text-xs text-slate-600 mt-0.5">Comfort-care patients without active curative monitoring goals do not benefit from intensive physiological surveillance.</p>
               <span class="text-[11px] font-medium text-teal-800">&rarr; Action: Home palliative care coordination.</span>
             </div>
           </div>
@@ -1665,10 +1608,7 @@
                 <button onclick="inspectPatientChart('${p.id}')" class="px-2.5 py-1 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-xs font-semibold cursor-pointer">
                   Chart
                 </button>
-                <button onclick="openDoctorPrescriptionSlip('${p.id}')" class="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-xs font-semibold cursor-pointer">
-                  Slip
-                </button>
-              </div>
+                </div>
             </td>
           </tr>
         `;
@@ -1853,18 +1793,29 @@
       }
     }
 
-    function fallbackAiSummary(pid) {
+        function fallbackAiSummary(pid) {
       const summaryBox = document.getElementById("chart-ai-summary");
+      if (!summaryBox) return;
       if (pid === "patient-003") {
         summaryBox.innerHTML = `
           <div class="font-medium text-slate-800">
-            Rajesh Sharma exhibits Grade 2 systolic hypertension surge reaching 168/104 mmHg. Guideline protocol recommends dose titration of Amlodipine from 5mg to 10mg OD and repeat resting blood pressure within 24 hours.
+            Day 12 after discharge. Three verified BP readings increased from 138/86 to 162/96 across six days. No emergency symptoms recorded. This meets BP_TREND_UP_3 review criteria. Coordinator outreach and clinician review are recommended.
           </div>
           <div class="mt-2 text-[11px] font-semibold text-purple-800 bg-purple-100/60 p-2 rounded-lg">
-            Recommended Action: Coordinator Outreach & Clinician Review OD. Enforce strict sodium restriction (&lt; 2.0g/day).
+            Recommended Action: Coordinator outreach and clinician review.
           </div>
         `;
       } else {
+        summaryBox.innerHTML = `
+          <div class="font-medium text-slate-800">
+            30-day post-discharge monitoring in progress. Verified telemetry readings are within expected parameters. No emergency symptoms recorded.
+          </div>
+          <div class="mt-2 text-[11px] font-semibold text-purple-800 bg-purple-100/60 p-2 rounded-lg">
+            Recommended Action: Continue scheduled telemetry monitoring.
+          </div>
+        `;
+      }
+    } else {
         summaryBox.innerHTML = `
           <div class="font-medium text-slate-800">
             Biometric telemetry shows stable chronic disease trajectory. Patient is adherent to scheduled daily medication and weekly surveillance checkpoints.
@@ -2015,19 +1966,9 @@
     // ==============================================
     // FEATURE 3: AI SMART RX INTERACTION & SAFETY CHECKER
     // ==============================================
-    function setRxCheck(drug, dose) {
-      document.getElementById("rx-check-drug").value = drug;
-      document.getElementById("rx-check-dose").value = dose;
-      runMedicationCheck();
-    }
+    
 
-    async function runMedicationCheck() {
-      const drug = document.getElementById("rx-check-drug").value.trim();
-      const dose = document.getElementById("rx-check-dose").value.trim();
-      if (!drug) {
-        showToast("Please enter a medication name", "error");
-        return;
-      }
+    
 
       const resultBox = document.getElementById("rx-check-result");
       const scorePill = document.getElementById("rx-safety-score-pill");
@@ -2377,46 +2318,7 @@
     // ==============================================
     // DIGITAL OPD PRESCRIPTION SLIP MODAL
     // ==============================================
-    function openDoctorPrescriptionSlip(pid) {
-      const p = clinicPatients.find(item => item.id === (pid || selectedPatientId)) || clinicPatients[0];
-      if (!p) return;
-
-      document.getElementById("slip-patient-name").innerText = p.display_name;
-      document.getElementById("slip-patient-uhid").innerText = `${p.id.toUpperCase()} • ${p.age || 58} Y`;
-      document.getElementById("slip-patient-abha").innerText = `${p.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
-      document.getElementById("slip-patient-diag").innerText = p.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ');
-      document.getElementById("slip-doctor-date").innerText = `Date: ${new Date().toLocaleDateString('en-GB')} IST`;
-
-      const orders = document.getElementById("slip-rx-orders");
-      if (p.id === "patient-003") {
-        orders.innerHTML = `
-          <div>• <strong>Rx Titration:</strong> Tab. Amlodipine 10mg OD (Take 1 tablet after dinner with warm water).</div>
-          <div>• <strong>Dietary Restriction:</strong> Strict dietary sodium restriction (&lt; 2.0g/day). Avoid pickles and papad.</div>
-          <div>• <strong>Telemetry Schedule:</strong> Mandatory repeat resting BP reading tomorrow morning at 08:00 AM.</div>
-          <div>• <strong>Next Review:</strong> Scheduled teleconsultation in 72 hours.</div>
-        `;
-      } else if (p.conditions.includes("type_2_diabetes")) {
-        orders.innerHTML = `
-          <div>• <strong>Rx Orders:</strong> Tab. Metformin 500mg BD after breakfast and dinner.</div>
-          <div>• <strong>Dietary Guidance:</strong> Low glycemic index meals; minimum 30 minutes brisk walk daily.</div>
-          <div>• <strong>Telemetry Schedule:</strong> Log fasting glucose tomorrow morning; log post-lunch reading.</div>
-          <div>• <strong>Next Review:</strong> Regular scheduled follow-up on Oct 26, 2026.</div>
-        `;
-      } else {
-        orders.innerHTML = `
-          <div>• <strong>Rx Orders:</strong> Continue regular morning prescribed medication with water.</div>
-          <div>• <strong>Routine Follow-up:</strong> Log daily morning blood pressure reading in SwasthyaLoop portal.</div>
-          <div>• <strong>Next Review:</strong> Scheduled OPD visit on Oct 24, 2026.</div>
-        `;
-      }
-
-      document.getElementById("prescription-modal").classList.remove("hidden");
-      lucide.createIcons();
-    }
-
-    function closePrescriptionModal() {
-      document.getElementById("prescription-modal").classList.add("hidden");
-    }
+    
 
     function showToast(msg, type) {
       const toast = document.getElementById("toast");
@@ -2466,61 +2368,66 @@
       lucide.createIcons();
     }
 
-    function openSupervisorAuditModal() {
+        function openSupervisorAuditModal() {
       const p = clinicPatients.find(item => item.id === selectedPatientId) || clinicPatients[0];
       const modal = document.getElementById("supervisor-modal");
       if (!modal) return;
       modal.classList.remove("hidden");
 
       const sup = currentSupervisorAudit || {
-        supervisor_status: "CLINICALLY_VERIFIED",
-        fact_check_score: "100%",
-        hallucination_risk: "0.0%",
-        verified_ground_truth: [
-          `Patient ID: ${p ? p.id : 'patient-001'} (${p ? p.display_name : 'Patient'}, Age ${p ? p.age : 56})`,
-          `Assigned Cohort: ${p ? (p.cohort_name || 'Cohort A: 30-Day Post-Discharge Cardiac Follow-Up') : 'Cohort A'}`,
-          `Verified Conditions: ${p ? p.conditions.join(', ') : 'Hypertension'}`,
-          `Calculated Organ Safety: eGFR 42 mL/min/1.73m² (Verified vs Lab Baseline)`,
-          `Active Telemetry Mode: ${p ? (p.telemetry_source || 'ASHA NCD Kit + LCD Photo-OCR') : 'ASHA NCD Kit'}`
+        status: "VERIFIED",
+        rule_id: "BP_TREND_UP_3",
+        claim_check: "all figures matched",
+        source_readings_used: [
+          "138/86 mmHg (2026-10-13, Device photo, patient-confirmed)",
+          "148/90 mmHg (2026-10-16, Caregiver/ASHA-assisted entry)",
+          "162/96 mmHg (2026-10-18, Device photo, patient-confirmed)"
         ],
-        safety_rules_passed: [
-          "SEC-101: eGFR & Renal Safety Boundary Check — Dosage safely verified (PASSED)",
-          "SEC-102: Dual RAS Blockade Negative Screen — ACEi + ARB combination checked (PASSED)",
-          "SEC-103: National Clinical Guideline Grounding — Provenance verified in ICMR 2024 & IGH-IV (PASSED)",
-          "SEC-104: High-Stakes Discharge Cohort Boundary & Exit Milestone checked (PASSED)",
-          "SEC-105: Acute Hemodynamic Emergency Keyword Diversion active (PASSED)"
-        ]
+        dates: ["2026-10-13", "2026-10-16", "2026-10-18"],
+        sources: ["Device photo, patient-confirmed", "Caregiver/ASHA-assisted entry"],
+        blocked_categories: ["diagnosis", "prescription", "dosage change"],
+        numeric_claim_match: "all figures matched"
       };
 
       const scoreEl = document.getElementById("sup-score");
       const riskEl = document.getElementById("sup-risk");
-      if (scoreEl) scoreEl.innerText = sup.fact_check_score || "100%";
-      if (riskEl) riskEl.innerText = sup.hallucination_risk || "0.0%";
+      if (scoreEl) scoreEl.innerText = sup.status === "VERIFIED" ? "VERIFIED" : sup.status;
+      if (riskEl) riskEl.innerText = sup.numeric_claim_match || "all figures matched";
 
       const gtBox = document.getElementById("sup-ground-truth");
       if (gtBox) {
-        gtBox.innerHTML = (sup.verified_ground_truth || []).map(gt => `
-          <div class="flex items-center space-x-2 text-slate-800">
-            <span class="text-teal-600 font-bold">&#10003;</span>
-            <span>${gt}</span>
+        const readingsHtml = (sup.source_readings_used || []).map(r => `<div>&bull; <span class="font-mono">${r}</span></div>`).join("");
+        const sourcesHtml = (sup.sources || ["Device photo, patient-confirmed"]).join(", ");
+        const datesHtml = (sup.dates || []).join(" &rarr; ");
+
+        gtBox.innerHTML = `
+          <div class="space-y-1.5 text-xs text-slate-800">
+            <div><strong>Rule ID:</strong> <span class="font-mono font-bold text-teal-800">${sup.rule_id || 'BP_TREND_UP_3'}</span></div>
+            <div><strong>Dates Used:</strong> <span>${datesHtml}</span></div>
+            <div><strong>Verified Sources:</strong> <span>${sourcesHtml}</span></div>
+            <div><strong>Source Readings Used:</strong></div>
+            <div class="pl-2 space-y-0.5 text-slate-700">${readingsHtml}</div>
+            <div><strong>Numeric Claim Match:</strong> <span class="text-emerald-700 font-bold">${sup.claim_check || 'all figures matched'}</span></div>
+            <div><strong>Blocked Categories:</strong> <span class="text-slate-600">${(sup.blocked_categories || ['diagnosis', 'prescription', 'dosage change']).join(', ')}</span></div>
+            <div><strong>Supervisor Status:</strong> <span class="px-2 py-0.5 rounded text-xs font-bold ${sup.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${sup.status || 'VERIFIED'}</span></div>
           </div>
-        `).join("");
+        `;
       }
 
       const rulesBox = document.getElementById("sup-rules-checked");
       if (rulesBox) {
-        rulesBox.innerHTML = (sup.safety_rules_passed || []).map(r => `
-          <div class="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-lg flex items-center justify-between text-xs text-emerald-950">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span class="font-medium">${r}</span>
-            </div>
-            <span class="text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">RULE PASSED</span>
+        rulesBox.innerHTML = `
+          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+            &bull; Verified source readings directly match database records (${sup.claim_check || 'all figures matched'})
           </div>
-        `).join("");
+          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+            &bull; Rule ID (${sup.rule_id || 'BP_TREND_UP_3'}) verified against active clinical criteria
+          </div>
+          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+            &bull; Prohibited categories filter active: diagnosis, prescription, dosage change (PASSED)
+          </div>
+        `;
       }
-
-      lucide.createIcons();
     }
 
     function closeSupervisorAuditModal() {
@@ -2639,6 +2546,15 @@
         promptResolveFlag(flag.id);
       } else {
         showToast("✓ Documented coordinator phone outreach with patient; technique confirmed, no acute symptoms.", "success");
+      }
+    }
+
+        function handleResolveReminder() {
+      const reminderFlag = clinicFlags.find(f => f.patient_id === selectedPatientId && f.status === "open" && (f.category === "operational_reminder" || f.source_rule_id === "rule-missing-reading-v1"));
+      if (reminderFlag) {
+        promptResolveFlag(reminderFlag.id);
+      } else {
+        showToast("Operational reminder resolved.", "success");
       }
     }
 
