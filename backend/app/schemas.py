@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Any
 from pydantic import BaseModel, Field, model_validator
 
 class PatientCreate(BaseModel):
@@ -38,15 +38,26 @@ class CarePlanResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class ReadingCreate(BaseModel):
-    patient_id: str
+    patient_id: Optional[str] = None
     type: Literal["blood_pressure", "blood_glucose"]
     recorded_at: str  # ISO timestamp
     systolic_mmhg: Optional[float] = None
     diastolic_mmhg: Optional[float] = None
     value: Optional[float] = None
     unit: Optional[str] = None
-    context: Optional[Literal["fasting", "before_meal", "after_meal", "bedtime", "unspecified"]] = None
+    context: Optional[str] = None
     source: str = "manual_entry"
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_reading_inputs(cls, data: Any):
+        if isinstance(data, dict):
+            raw_ctx = data.get("context")
+            if raw_ctx:
+                valid_contexts = {"fasting", "before_meal", "after_meal", "bedtime", "unspecified"}
+                if raw_ctx not in valid_contexts:
+                    data["context"] = "unspecified"
+        return data
 
     @model_validator(mode="after")
     def validate_reading_fields(self):
@@ -62,6 +73,10 @@ class ReadingCreate(BaseModel):
             if self.unit and self.unit != "mmHg":
                 raise ValueError("Blood pressure unit must be 'mmHg'.")
             self.unit = "mmHg"
+        valid_contexts = {"fasting", "before_meal", "after_meal", "bedtime", "unspecified"}
+        if self.context and self.context not in valid_contexts:
+            self.context = "unspecified"
+
         elif self.type == "blood_glucose":
             if self.value is None:
                 raise ValueError("A glucose value is required.")

@@ -1720,33 +1720,11 @@
     function fallbackAiSummary(pid) {
       const summaryBox = document.getElementById("chart-ai-summary");
       if (!summaryBox) return;
-      if (pid === "patient-003") {
-        currentSupervisorAudit = {
-          status: "VERIFIED",
-          rule_id: "BP_TREND_UP_3",
-          claim_check: "all figures matched",
-          source_readings_used: [
-            "138/86 mmHg (2026-10-13, Device photo, patient-confirmed)",
-            "148/90 mmHg (2026-10-16, Caregiver/ASHA-assisted entry)",
-            "162/96 mmHg (2026-10-18, Device photo, patient-confirmed)"
-          ],
-          dates: ["2026-10-13", "2026-10-16", "2026-10-18"],
-          sources: ["Device photo, patient-confirmed", "Caregiver/ASHA-assisted entry"],
-          blocked_categories: ["diagnosis", "prescription", "dosage change"]
-        };
-        summaryBox.innerHTML = `
-          <div class="font-medium text-slate-800">
-            Day 12 after discharge. Three verified BP readings increased from 138/86 to 162/96 across six days. No emergency symptoms recorded. This meets BP_TREND_UP_3 review criteria. Coordinator outreach and clinician review are recommended.
-          </div>
-          <div class="mt-2 text-[11px] font-semibold text-purple-800 bg-purple-100/60 p-2 rounded-lg">
-            Recommended Action: Coordinator outreach and clinician review.
-          </div>
-        `;
-      } else {
+      {
         currentSupervisorAudit = {
           status: "MANUAL REVIEW NEEDED",
           rule_id: "BP_TREND_UP_3",
-          claim_check: "fewer than 3 verified readings",
+          claim_check: "summary service unavailable",
           source_readings_used: [],
           dates: [],
           sources: [],
@@ -1754,10 +1732,10 @@
         };
         summaryBox.innerHTML = `
           <div class="font-medium text-slate-800">
-            30-day post-discharge monitoring in progress. Verified telemetry readings are within expected parameters. No emergency symptoms recorded.
+            The clinical summary service is unavailable. Review the verified readings and open flags before taking a coordinator action.
           </div>
           <div class="mt-2 text-[11px] font-semibold text-purple-800 bg-purple-100/60 p-2 rounded-lg">
-            Recommended Action: Continue scheduled telemetry monitoring.
+            Recommended Action: Manual review required.
           </div>
         `;
       }
@@ -2055,20 +2033,24 @@
         let payload = null;
         if (data.reading_type === "blood_pressure" && data.systolic_mmhg) {
           payload = {
+            patient_id: selectedPatientId,
             type: "blood_pressure",
             recorded_at: new Date().toISOString(),
             systolic_mmhg: data.systolic_mmhg,
             diastolic_mmhg: data.diastolic_mmhg,
             unit: "mmHg",
-            context: "home_monitor_scan"
+            context: "unspecified",
+            source: "Device photo, patient-confirmed"
           };
         } else if (data.reading_type === "blood_glucose" && data.glucose_value) {
           payload = {
+            patient_id: selectedPatientId,
             type: "blood_glucose",
             recorded_at: new Date().toISOString(),
             value: data.glucose_value,
             unit: "mg/dL",
-            context: data.glucose_context || "fasting"
+            context: data.glucose_context || "fasting",
+            source: "Device photo, patient-confirmed"
           };
         }
 

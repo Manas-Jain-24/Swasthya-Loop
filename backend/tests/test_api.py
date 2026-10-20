@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import Base, engine, SessionLocal
 from app.seed.demo_data import seed_database
-from app.models import Reading, FollowupFlag
+from app.models import CareTask, Reading, FollowupFlag
 
 client = TestClient(app)
 
@@ -51,6 +51,39 @@ def test_valid_blood_pressure_reading():
     assert data["unit"] == "mmHg"
     assert data["source"] == "Device photo, patient-confirmed"
 
+def test_logging_bp_automatically_completes_matching_reading_task():
+    """Saving a BP value should clear the corresponding checklist item."""
+    db = SessionLocal()
+    try:
+        db.query(CareTask).filter(CareTask.id == "task-autocomplete-test").delete()
+        db.add(CareTask(
+            id="task-autocomplete-test",
+            patient_id="patient-003",
+            task_type="reading",
+            title="Log morning blood pressure reading",
+            due_at="2026-10-20T09:00:00+05:30",
+            status="pending",
+            created_by="test"
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    response = client.post("/api/patients/patient-003/readings", json={
+        "patient_id": "patient-003",
+        "type": "blood_pressure",
+        "recorded_at": "2026-10-20T08:00:00+05:30",
+        "systolic_mmhg": 136.0,
+        "diastolic_mmhg": 84.0,
+        "unit": "mmHg",
+        "source": "Device photo, patient-confirmed"
+    })
+    assert response.status_code == 200
+
+    after = client.get("/api/tasks?patient_id=patient-003").json()
+    completed_ids = {task["id"] for task in after if task["status"] == "completed"}
+    assert "task-autocomplete-test" in completed_ids
+
 def test_invalid_blood_pressure_bounds():
     payload = {
         "patient_id": "patient-001",
@@ -61,6 +94,19 @@ def test_invalid_blood_pressure_bounds():
     }
     response = client.post("/api/patients/patient-001/readings", json=payload)
     assert response.status_code == 422  # Validation error
+
+def test_reading_payload_cannot_target_a_different_patient():
+    response = client.post("/api/patients/patient-001/readings", json={
+        "patient_id": "patient-003",
+        "type": "blood_pressure",
+        "recorded_at": "2026-10-20T10:00:00+05:30",
+        "systolic_mmhg": 128.0,
+        "diastolic_mmhg": 78.0,
+        "unit": "mmHg",
+        "source": "Device photo, patient-confirmed"
+    })
+    assert response.status_code == 400
+    assert "must match" in response.json()["detail"]
 
 def test_valid_glucose_reading():
     payload = {
@@ -125,6 +171,49 @@ def test_ai_copilot_emergency_sentinel():
     data = response.json()
     assert data["is_emergency"] is True
     assert "108" in data["reply"]
+
+def test_patient_companion_answers_by_intent():
+    """Patient chat must not return the same generic answer for every question."""
+    medication = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003", "user_role": "patient",
+        "message": "What should I do if I miss my medicine?", "language": "en"
+    }).json()["reply"]
+    diet = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003", "user_role": "patient",
+        "message": "What food should I avoid?", "language": "en"
+    }).json()["reply"]
+    introduction = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003", "user_role": "patient",
+        "message": "My name is Rakesh", "language": "en"
+    }).json()["reply"]
+    assert medication != diet != introduction
+    assert "discharge instructions" in medication.lower()
+    assert "salt" in diet.lower()
+    assert "nice to meet you" in introduction.lower()
+
+def test_patient_companion_handles_unrelated_question_safely():
+    response = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003", "user_role": "patient",
+        "message": "I am feeling horny, what should I do?", "language": "en"
+    })
+    assert response.status_code == 200
+    reply = response.json()["reply"].lower()
+    assert "blood-pressure monitoring" in reply
+    assert "latest recorded blood pressure" not in reply
+
+def test_patient_companion_uses_safe_fallback_when_no_gemini_key(monkeypatch):
+    """Without a key, patient chat remains useful instead of failing."""
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    from app.services import ai_copilot
+    monkeypatch.setattr(ai_copilot, "get_gemini_api_key", lambda: None)
+    response = client.post("/api/ai/copilot", json={
+        "patient_id": "patient-003", "user_role": "patient",
+        "message": "What should I do when my BP is high?", "language": "en"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["source"] == "patient_companion_offline_fallback"
+    assert "sit quietly" in data["reply"].lower()
 
 def test_ai_medication_check_safe():
     response = client.post("/api/ai/medication-check", json={

@@ -181,25 +181,47 @@ def create_reading(patient_id: str, reading_in: ReadingCreate, db: Session = Dep
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found.")
 
+    if reading_in.patient_id and reading_in.patient_id != patient_id:
+        raise HTTPException(status_code=400, detail="Payload patient_id must match the URL patient_id.")
+    target_patient_id = patient_id
+
     new_reading = Reading(
         id=f"reading-{uuid.uuid4().hex[:8]}",
-        patient_id=patient_id,
+        patient_id=target_patient_id,
         type=reading_in.type,
         recorded_at=reading_in.recorded_at,
         systolic_mmhg=reading_in.systolic_mmhg,
         diastolic_mmhg=reading_in.diastolic_mmhg,
         value=reading_in.value,
         unit=reading_in.unit,
-        context=reading_in.context,
+        context=reading_in.context or "unspecified",
         source=reading_in.source,
         is_demo_data=True
     )
     db.add(new_reading)
+
+    # A confirmed vital fulfils the matching pending monitoring task. This keeps
+    # the patient checklist in sync whether the reading came from manual entry,
+    # a caregiver, Bluetooth cuff, or confirmed device photo.
+    task_keywords = ("blood pressure", "bp") if reading_in.type == "blood_pressure" else ("glucose", "sugar")
+    pending_reading_tasks = db.query(CareTask).filter(
+        CareTask.patient_id == target_patient_id,
+        CareTask.task_type == "reading",
+        CareTask.status == "pending"
+    ).order_by(CareTask.due_at.asc()).all()
+    matching_task = next(
+        (task for task in pending_reading_tasks if any(keyword in task.title.lower() for keyword in task_keywords)),
+        None
+    )
+    if matching_task:
+        matching_task.status = "completed"
+        matching_task.completed_at = datetime.now(timezone.utc).isoformat()
+
     db.commit()
     db.refresh(new_reading)
 
     # Re-evaluate rules after new reading
-    evaluate_patient_tasks_and_rules(db, patient_id)
+    evaluate_patient_tasks_and_rules(db, target_patient_id)
 
     return new_reading
 

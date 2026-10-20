@@ -203,7 +203,7 @@
       <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <button id="btn-audio-play" onclick="toggleAudio()" class="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all cursor-pointer">
           <i data-lucide="volume-2" class="w-4 h-4"></i>
-          <span id="audio-play-label">🔊 Listen Audio Briefing (सलाह सुनें)</span>
+          <span id="audio-play-label">🔊 Listen Audio Briefing</span>
         </button>
 
         <div id="audio-wave" class="hidden flex items-center space-x-1 text-purple-700">
@@ -240,34 +240,34 @@
             <i data-lucide="message-square-heart" class="w-4 h-4"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-slate-900">Ask Swasthya Saathi (स्वास्थ्य साथी से पूछें)</h3>
-            <p class="text-xs text-slate-500">Ask any question in Hindi or English • 108 Emergency Sentinel Active</p>
+            <h3 id="saathi-heading" class="text-sm font-bold text-slate-900">Ask Swasthya Saathi</h3>
+            <p id="saathi-subheading" class="text-xs text-slate-500">Ask any question in English or Hindi • 108 Emergency Sentinel Active</p>
           </div>
         </div>
         <span class="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">AI Care Companion</span>
       </div>
 
       <!-- Quick patient inquiry chips -->
-      <div class="flex flex-wrap gap-1.5">
-        <button onclick="setPatientQuestion('दवा लेने का सही समय क्या है और क्या साइड इफेक्ट्स हो सकते हैं?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
-          दवा का सही समय?
+      <div id="saathi-quick-chips" class="flex flex-wrap gap-1.5">
+        <button onclick="setPatientQuestion('What is the correct schedule and timing for taking my medications?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
+          Correct Medicine Time?
         </button>
-        <button onclick="setPatientQuestion('बीपी अचानक बढ़ने पर मुझे तुरंत क्या करना चाहिए?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
-          बीपी बढ़ने पर क्या करें?
+        <button onclick="setPatientQuestion('What should I do if my blood pressure spikes or is high?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
+          High BP Actions?
         </button>
-        <button onclick="setPatientQuestion('खाने में नमक और तेल कम करने के क्या आसान तरीके हैं?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
-          आहार व नमक नियम?
+        <button onclick="setPatientQuestion('What are the sodium and diet rules for cardiac recovery?')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
+          Diet &amp; Sodium Rules?
         </button>
       </div>
 
       <!-- Chat Response Box -->
       <div id="patient-chat-output" class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-2 max-h-48 overflow-y-auto leading-relaxed">
-        <p class="text-slate-500 italic">नमस्ते! स्वास्थ्य साथी से कोई भी सवाल पूछें (जैसे: दवा, बीपी, आहार नियम)।</p>
+        <p class="text-slate-500 italic">Hello! Ask Swasthya Saathi any question (e.g. medications, BP care, diet rules).</p>
       </div>
 
       <!-- Audio play button for reply -->
       <div id="patient-chat-audio-container" class="hidden flex items-center justify-between p-2.5 bg-teal-50 border border-teal-200 rounded-lg text-xs">
-        <span class="text-teal-800 font-medium">🔊 Listen to this answer (यह उत्तर सुनें):</span>
+        <span id="chat-audio-label" class="text-teal-800 font-medium">🔊 Listen to this answer:</span>
         <button onclick="speakChatReply()" class="px-3 py-1 bg-teal-700 hover:bg-teal-800 text-white rounded-md text-xs font-bold cursor-pointer">
           Play Voice
         </button>
@@ -275,7 +275,7 @@
 
       <!-- Chat Input Form -->
       <form onsubmit="submitPatientChat(event)" class="flex items-center space-x-2">
-        <input type="text" id="patient-chat-input" placeholder="सवाल लिखें (e.g., मुझे चक्कर आ रहे हैं, क्या करूं?)..." class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+        <input type="text" id="patient-chat-input" placeholder="Ask a question (e.g., I feel dizzy, what should I do?)..." class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
         <button type="submit" id="btn-patient-chat" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-2xs flex items-center space-x-1.5 cursor-pointer">
           <i data-lucide="send" class="w-3.5 h-3.5"></i>
           <span>Ask</span>
@@ -370,7 +370,7 @@
             <select id="vital-glu-context" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-teal-500">
               <option value="fasting">Fasting (खाली पेट - सुबह)</option>
               <option value="after_meal">After Meal (भोजन के 2 घंटे बाद)</option>
-              <option value="random">Random (किसी भी समय)</option>
+              <option value="unspecified">Random / Unspecified (किसी भी समय)</option>
             </select>
           </div>
         </div>
@@ -490,7 +490,13 @@
     let currentPatientId = "patient-003";
     let patientsList = [];
     let patientTasks = [];
-    let currentLanguage = "hi";
+    let currentLanguage = "en";
+    try {
+      const storedLang = localStorage.getItem("swasthya_lang");
+      if (storedLang === "en" || storedLang === "hi") {
+        currentLanguage = storedLang;
+      }
+    } catch (e) {}
     let isAudioPlaying = false;
     let selectedVitalType = "blood_pressure";
     let lastPatientScannedData = null;
@@ -501,8 +507,16 @@
       const pid = urlParams.get("patient_id");
       if (pid) currentPatientId = pid;
 
+      try {
+        const storedLang = localStorage.getItem("swasthya_lang");
+        if (storedLang === "en" || storedLang === "hi") {
+          currentLanguage = storedLang;
+        }
+      } catch (e) {}
+
       await loadPatients();
       await loadPatientData();
+      setLanguage(currentLanguage);
       lucide.createIcons();
     }
 
@@ -526,6 +540,7 @@
       currentPatientId = newId;
       window.history.pushState({}, "", `?patient_id=${newId}`);
       loadPatientData();
+      setLanguage(currentLanguage);
     }
 
     async function loadPatientData() {
@@ -534,7 +549,8 @@
         if (!patient) return;
 
         // Welcome Card
-        document.getElementById("welcome-name").innerText = `Namaste, ${patient.display_name} ji`;
+        const tGreeting = (TRANSLATIONS[currentLanguage] || TRANSLATIONS.en).welcomeGreeting(patient.display_name);
+        document.getElementById("welcome-name").innerText = tGreeting;
         document.getElementById("welcome-abha").innerText = `${patient.display_name.toLowerCase().replace(/[^a-z]/g, '')}@sbx`;
         document.getElementById("welcome-conditions").innerText = `Care Plan: ${patient.conditions.map(c => c.replace(/_/g, ' ').toUpperCase()).join(' & ')} • Daily Surveillance`;
 
@@ -568,13 +584,13 @@
       const pending = patientTasks.filter(t => t.status === "pending");
       pill.innerText = `${pending.length} Pending Today`;
 
-      if (patientTasks.length === 0) {
+      if (pending.length === 0) {
         container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">All tasks completed for today!</div>`;
         return;
       }
 
-      container.innerHTML = patientTasks.map(t => {
-        const isDone = t.status === "completed";
+      container.innerHTML = pending.map(t => {
+        const isDone = false;
         return `
           <div class="p-3.5 rounded-xl border ${isDone ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-slate-200 hover:border-teal-300 shadow-2xs"} flex items-center justify-between gap-3 transition-all">
             <div class="flex items-center space-x-3">
@@ -619,17 +635,100 @@
     }
 
     // ==============================================
-    // AUDIO & BRIEFING LOGIC
+    // AUDIO & BRIEFING LOGIC (BILINGUAL)
     // ==============================================
+    const TRANSLATIONS = {
+      en: {
+        audioPlay: "🔊 Listen Audio Briefing",
+        audioStop: "⏹ Stop Audio",
+        saathiHeading: "Ask Swasthya Saathi",
+        saathiSubheading: "Ask any question in English or Hindi • 108 Emergency Sentinel Active",
+        quickChips: [
+          { label: "Correct Medicine Time?", query: "What is the correct schedule and timing for taking my medications?" },
+          { label: "High BP Actions?", query: "What should I do if my blood pressure spikes or is high?" },
+          { label: "Diet & Sodium Rules?", query: "What are the sodium and diet rules for cardiac recovery?" }
+        ],
+        chatInitial: "Hello! Ask Swasthya Saathi any question (e.g. medications, BP care, diet rules).",
+        chatThinking: "Swasthya Saathi is thinking... (Powered by Gemini 3.8 Flash)",
+        chatInputPlaceholder: "Ask a question (e.g., I feel dizzy, what should I do?)...",
+        chatAudioLabel: "🔊 Listen to this answer:",
+        welcomeGreeting: (name) => `Hello, ${name} ji`
+      },
+      hi: {
+        audioPlay: "🔊 Listen Audio Briefing (सलाह सुनें)",
+        audioStop: "⏹ Stop Audio (आवाज रोकें)",
+        saathiHeading: "Ask Swasthya Saathi (स्वास्थ्य साथी से पूछें)",
+        saathiSubheading: "हिंदी या अंग्रेजी में कोई भी सवाल पूछें • 108 इमरजेंसी सुरक्षा सक्रिय",
+        quickChips: [
+          { label: "दवा का सही समय?", query: "दवा लेने का सही समय क्या है और क्या साइड इफेक्ट्स हो सकते हैं?" },
+          { label: "बीपी बढ़ने पर क्या करें?", query: "बीपी अचानक बढ़ने पर मुझे तुरंत क्या करना चाहिए?" },
+          { label: "आहार व नमक नियम?", query: "खाने में नमक और तेल कम करने के क्या आसान तरीके हैं?" }
+        ],
+        chatInitial: "नमस्ते! स्वास्थ्य साथी से कोई भी सवाल पूछें (जैसे: दवा, बीपी, आहार नियम)।",
+        chatThinking: "स्वास्थ्य साथी सोच रहा है... (Thinking with Gemini 3.8 Flash)",
+        chatInputPlaceholder: "सवाल लिखें (e.g., मुझे चक्कर आ रहे हैं, क्या करूं?)...",
+        chatAudioLabel: "🔊 Listen to this answer (यह उत्तर सुनें):",
+        welcomeGreeting: (name) => `नमस्ते, ${name} जी`
+      }
+    };
+
     function setLanguage(lang) {
       currentLanguage = lang;
-      if (lang === "en") {
-        document.getElementById("lang-btn-en").className = "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer";
-        document.getElementById("lang-btn-hi").className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer";
-      } else {
-        document.getElementById("lang-btn-hi").className = "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer";
-        document.getElementById("lang-btn-en").className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer";
+      try {
+        localStorage.setItem("swasthya_lang", lang);
+      } catch (e) {}
+
+      const btnEn = document.getElementById("lang-btn-en");
+      const btnHi = document.getElementById("lang-btn-hi");
+      if (btnEn && btnHi) {
+        if (lang === "en") {
+          btnEn.className = "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer";
+          btnHi.className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer";
+        } else {
+          btnHi.className = "px-2.5 py-1 rounded-md bg-white text-purple-800 shadow-2xs font-bold transition-all cursor-pointer";
+          btnEn.className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition-all cursor-pointer";
+        }
       }
+
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+
+      const audioLabel = document.getElementById("audio-play-label");
+      if (audioLabel && !isAudioPlaying) {
+        audioLabel.innerText = t.audioPlay;
+      }
+
+      const saathiHeading = document.getElementById("saathi-heading");
+      if (saathiHeading) saathiHeading.innerText = t.saathiHeading;
+
+      const saathiSub = document.getElementById("saathi-subheading");
+      if (saathiSub) saathiSub.innerText = t.saathiSubheading;
+
+      const chipsContainer = document.getElementById("saathi-quick-chips");
+      if (chipsContainer) {
+        chipsContainer.innerHTML = t.quickChips.map(c => `
+          <button onclick="setPatientQuestion('${c.query.replace(/'/g, "\\'")}')" class="text-xs bg-slate-100 hover:bg-teal-50 hover:text-teal-800 px-3 py-1 rounded-lg text-slate-700 cursor-pointer transition-colors">
+            ${c.label}
+          </button>
+        `).join("");
+      }
+
+      const chatOutput = document.getElementById("patient-chat-output");
+      if (chatOutput && (!chatOutput.dataset.hasUserChat || chatOutput.dataset.hasUserChat === "false")) {
+        chatOutput.innerHTML = `<p class="text-slate-500 italic">${t.chatInitial}</p>`;
+      }
+
+      const chatInput = document.getElementById("patient-chat-input");
+      if (chatInput) chatInput.placeholder = t.chatInputPlaceholder;
+
+      const chatAudioLabel = document.getElementById("chat-audio-label");
+      if (chatAudioLabel) chatAudioLabel.innerText = t.chatAudioLabel;
+
+      const p = patientsList.find(item => item.id === currentPatientId);
+      if (p) {
+        const welcomeEl = document.getElementById("welcome-name");
+        if (welcomeEl) welcomeEl.innerText = t.welcomeGreeting(p.display_name);
+      }
+
       loadBriefing();
     }
 
@@ -637,26 +736,30 @@
       const p = patientsList.find(item => item.id === currentPatientId);
       const name = p ? p.display_name : "Patient";
       const textEl = document.getElementById("patient-briefing-text");
+      if (!textEl) return;
+      const cohortDay = p && p.cohort_badge ? p.cohort_badge : "Day 12 of 30";
       if (currentLanguage === "hi") {
         if (currentPatientId === "patient-003") {
           textEl.innerText = `नमस्ते ${name} जी! आप अपने 30-दिवसीय पोस्ट-डिस्चार्ज कार्डियक फॉलो-अप के 12वें दिन पर हैं। कृपया अपना निर्धारित रक्तचाप मापें। यदि सीने में दर्द या सांस लेने में गंभीर तकलीफ हो, तो तुरंत आपातकालीन चिकित्सा सहायता लें।`;
         } else {
-          textEl.innerText = `नमस्ते ${name} जी! आप अपने 30-दिवसीय पोस्ट-डिस्चार्ज फॉलो-अप पर हैं। कृपया अपने दैनिक स्वास्थ्य मापों को निर्धारित समय पर दर्ज करें।`;
+          textEl.innerText = `नमस्ते ${name} जी! आप अपने 30-दिवसीय पोस्ट-डिस्चार्ज फॉलो-अप (${cohortDay}) पर हैं। कृपया अपने दैनिक स्वास्थ्य मापों को निर्धारित समय पर दर्ज करें। आपातकालीन स्थिति में तुरंत 108 पर संपर्क करें।`;
         }
       } else {
         if (currentPatientId === "patient-003") {
           textEl.innerText = `Hello ${name}! You are on Day 12 of your 30-day post-discharge cardiac follow-up. Please log your verified resting blood pressure reading as scheduled. If you experience chest pain, severe shortness of breath, or emergency symptoms, seek immediate emergency medical care.`;
         } else {
-          textEl.innerText = `Hello ${name}! You are on your 30-day post-discharge monitoring plan. Please continue to log your scheduled verified telemetry readings.`;
+          textEl.innerText = `Hello ${name}! You are on your 30-day post-discharge monitoring plan (${cohortDay}). Please continue to log your scheduled verified telemetry readings. Seek immediate emergency care or dial 108 if experiencing acute chest distress.`;
         }
       }
     }
+
     function toggleAudio() {
+      const t = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
       if (isAudioPlaying) {
         window.speechSynthesis.cancel();
         isAudioPlaying = false;
         document.getElementById("audio-wave").classList.add("hidden");
-        document.getElementById("audio-play-label").innerText = currentLanguage === "hi" ? "🔊 Listen Audio Briefing (सलाह सुनें)" : "🔊 Listen Audio Briefing";
+        document.getElementById("audio-play-label").innerText = t.audioPlay;
       } else {
         const text = document.getElementById("patient-briefing-text").innerText;
         const utterance = new SpeechSynthesisUtterance(text);
@@ -666,13 +769,13 @@
         utterance.onstart = () => {
           isAudioPlaying = true;
           document.getElementById("audio-wave").classList.remove("hidden");
-          document.getElementById("audio-play-label").innerText = "⏹ Stop Audio (आवाज रोकें)";
+          document.getElementById("audio-play-label").innerText = t.audioStop;
         };
 
         utterance.onend = () => {
           isAudioPlaying = false;
           document.getElementById("audio-wave").classList.add("hidden");
-          document.getElementById("audio-play-label").innerText = currentLanguage === "hi" ? "🔊 Listen Audio Briefing (सलाह सुनें)" : "🔊 Listen Audio Briefing";
+          document.getElementById("audio-play-label").innerText = t.audioPlay;
         };
 
         window.speechSynthesis.speak(utterance);
@@ -697,10 +800,12 @@
       const btn = document.getElementById("btn-patient-chat");
       const audioContainer = document.getElementById("patient-chat-audio-container");
 
+      output.dataset.hasUserChat = "true";
       btn.disabled = true;
       btn.innerText = "...";
       audioContainer.classList.add("hidden");
-      output.innerHTML = `<div class="p-2 text-teal-700 animate-pulse">स्वास्थ्य साथी सोच रहा है... (Thinking with Gemini 3.8 Flash)</div>`;
+      const tChat = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
+      output.innerHTML = `<div class="p-2 text-teal-700 animate-pulse">${tChat.chatThinking}</div>`;
 
       try {
         const res = await fetch("/api/ai/copilot", {
@@ -726,7 +831,10 @@
               </div>
             `;
           } else {
-            output.innerHTML = `<div class="text-slate-800 whitespace-pre-line">${data.reply}</div>`;
+            // Use textContent so user/AI text cannot inject markup and markdown
+            // markers never appear as raw ** characters in the chat bubble.
+            output.innerHTML = '<div class="text-slate-800 whitespace-pre-line"></div>';
+            output.firstElementChild.textContent = data.reply;
             audioContainer.classList.remove("hidden");
           }
         } else {
@@ -903,6 +1011,9 @@
       btn.disabled = true;
       btn.innerText = "Saving...";
 
+      const sourceEl = document.getElementById("vital-source");
+      const sourceVal = sourceEl ? sourceEl.value : "Device photo, patient-confirmed";
+
       let payload = null;
       if (selectedVitalType === "blood_pressure") {
         const sbp = parseFloat(document.getElementById("vital-sbp").value);
@@ -913,13 +1024,21 @@
           btn.innerText = "Save My Reading";
           return;
         }
+        if (sbp <= dbp) {
+          showToast("Systolic blood pressure must be greater than diastolic", "error");
+          btn.disabled = false;
+          btn.innerText = "Save My Reading";
+          return;
+        }
         payload = {
+          patient_id: currentPatientId,
           type: "blood_pressure",
           recorded_at: new Date().toISOString(),
           systolic_mmhg: sbp,
           diastolic_mmhg: dbp,
           unit: "mmHg",
-          context: "home_companion_log"
+          context: "unspecified",
+          source: sourceVal
         };
       } else {
         const val = parseFloat(document.getElementById("vital-glu").value);
@@ -929,12 +1048,16 @@
           btn.innerText = "Save My Reading";
           return;
         }
+        let gluContext = document.getElementById("vital-glu-context").value;
+        if (gluContext === "random") gluContext = "unspecified";
         payload = {
+          patient_id: currentPatientId,
           type: "blood_glucose",
           recorded_at: new Date().toISOString(),
           value: val,
           unit: "mg/dL",
-          context: document.getElementById("vital-glu-context").value
+          context: gluContext,
+          source: sourceVal
         };
       }
 
@@ -951,7 +1074,9 @@
           document.getElementById("form-manual-vital").reset();
           await loadPatientData();
         } else {
-          showToast("Failed to save reading", "error");
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.detail ? (typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail)) : "Failed to save reading";
+          showToast(`Failed: ${errMsg}`, "error");
         }
       } catch (err) {
         console.error("Save reading error:", err);
